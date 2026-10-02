@@ -18,7 +18,7 @@ const hasTable = computed(() => Boolean(props.columns?.length && props.rows))
 </script>
 
 <template>
-  <UCard :ui="{ body: 'p-4 sm:p-5' }">
+  <UCard class="shrink-0" :ui="{ body: 'p-4 sm:p-5' }">
     <template #header>
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
