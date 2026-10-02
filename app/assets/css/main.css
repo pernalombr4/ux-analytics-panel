@@ -1,0 +1,52 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/*
+ * Chart tokens. Values are the validated default palette of the dataviz
+ * method (references/palette.md): categorical slots 1-2 checked with
+ * validate_palette.js in both modes. To use ENSPACE brand colours, swap these
+ * values and run the validator again; nothing else changes.
+ *
+ * Desktop is always series-1 and Mobile always series-2, on every page.
+ */
+:root {
+  --viz-series-1: #2a78d6;
+  --viz-series-2: #eb6834;
+  --viz-other: #898781;
+  --viz-grid: #e1e0d9;
+  --viz-axis: #c3c2b7;
+  --viz-surface: var(--ui-bg);
+  /* sequential, one hue (blue), light -> dark */
+  --viz-seq-1: #cde2fb;
+  --viz-seq-2: #9ec5f4;
+  --viz-seq-3: #6da7ec;
+  --viz-seq-4: #3987e5;
+  --viz-seq-5: #256abf;
+  --viz-seq-6: #184f95;
+  --viz-seq-7: #0d366b;
+  /* diverging: better than baseline / worse than baseline, gray midpoint */
+  --viz-better: #2a78d6;
+  --viz-worse: #e34948;
+  --viz-mid: #f0efec;
+  /* status: reserved, always with icon + label */
+  --viz-good: #0ca30c;
+  --viz-warning: #fab219;
+  --viz-serious: #ec835a;
+  --viz-critical: #d03b3b;
+  --viz-good-text: #006300;
+}
+
+.dark {
+  --viz-series-1: #3987e5;
+  --viz-series-2: #d95926;
+  --viz-grid: #2c2c2a;
+  --viz-axis: #383835;
+  --viz-better: #3987e5;
+  --viz-worse: #e66767;
+  --viz-mid: #383835;
+  --viz-good-text: #0ca30c;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

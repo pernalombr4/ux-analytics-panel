@@ -1,0 +1,30 @@
+{
+  "name": "ux-analytics-panel",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "npx serve .output/public",
+    "typecheck": "nuxt typecheck",
+    "postinstall": "nuxt prepare"
+  },
+  "packageManager": "pnpm@10.28.0",
+  "dependencies": {
+    "@iconify-json/lucide": "^1.2.138",
+    "@internationalized/date": "^3.12.4",
+    "@nuxt/ui": "^4.11.3",
+    "nuxt": "^4.5.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.3.12"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "vue-demi"
+    ]
+  }
+}
