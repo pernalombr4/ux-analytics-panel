@@ -60,3 +60,23 @@
 [data-slot="root"] > [data-slot="body"] > * {
   flex-shrink: 0;
 }
+
+/*
+ * Unovis (charts of the Nuxt UI dashboard template), on the dashboard's own
+ * tokens so it follows light and dark mode: recessive grid and axes, labels
+ * in text tokens, tooltip on the panel surface.
+ */
+.viz-unovis {
+  --vis-font-family: inherit;
+  --vis-axis-grid-color: var(--viz-grid);
+  --vis-axis-tick-color: var(--viz-axis);
+  --vis-axis-domain-color: var(--viz-axis);
+  --vis-axis-tick-label-color: var(--ui-text-muted);
+  --vis-axis-tick-label-font-size: 12px;
+  --vis-tooltip-background-color: var(--ui-bg);
+  --vis-tooltip-border-color: var(--ui-border);
+  --vis-tooltip-text-color: var(--ui-text);
+  --vis-tooltip-padding: 8px 10px;
+  --vis-tooltip-border-radius: 8px;
+  --vis-tooltip-shadow-color: rgba(0, 0, 0, 0.12);
+}

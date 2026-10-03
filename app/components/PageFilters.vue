@@ -5,7 +5,8 @@ const period = usePeriod()
 </script>
 
 <template>
-  <UDashboardToolbar>
+  <!-- Wraps on narrow screens instead of scrolling the last filter out of view. -->
+  <UDashboardToolbar :ui="{ left: 'flex-wrap gap-x-3 gap-y-2 py-2 min-w-0' }">
     <template #left>
       <PeriodFilter />
       <USwitch

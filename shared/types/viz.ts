@@ -45,3 +45,16 @@ export interface ScatterPoint {
   y: number
   tooltip?: string
 }
+
+// UnovisBars: one row per category, one value per series, same order as series.
+export interface BarSeries {
+  name: string
+  color: string
+}
+
+export interface BarRow {
+  key: string
+  label: string
+  values: (number | null)[]
+  notes?: string[]
+}

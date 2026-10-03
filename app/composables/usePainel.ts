@@ -50,6 +50,10 @@ export async function fetchPainel<T>(config: PainelConfig, chave: string | null,
     return await $fetch<T>(`${config.supabaseUrl}/rest/v1/rpc/painel`, {
       method: 'POST',
       headers: { apikey: config.supabaseKey },
+      // painel only reads, so a POST is safe to repeat. Retries cover a dropped
+      // connection and 5xx/429; a wrong passphrase (403) fails at once.
+      retry: 2,
+      retryDelay: 600,
       body: {
         p_chave: chave ?? '',
         p_recurso: recurso,

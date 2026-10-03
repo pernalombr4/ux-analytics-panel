@@ -11,7 +11,7 @@ Peça a senha a quem administra o painel.
 
 | Página | Pergunta |
 |---|---|
-| Panorama | Como foi o período, comparado com o anterior |
+| Panorama | Como foi o período, comparado com o anterior, e onde o atrito pesa mais |
 | Atrito por tela | Em que tela as pessoas tropeçam (cliques mortos, retornos rápidos, erros) |
 | Desktop × Mobile | Qual a pior versão de cada tela |
 | Audiência | Dispositivos, países, navegadores, sistemas e origens de acesso |
@@ -19,6 +19,11 @@ Peça a senha a quem administra o painel.
 | Saúde dos dados | Dias que faltam, coletas fora de hora e o que revisar |
 
 Taxas e médias são ponderadas por sessão. Usuários nunca são somados entre dias.
+
+Nenhum gráfico tem eixo de dias: cada um agrega o período escolhido, e a
+comparação com o período anterior é uma segunda barra. Os gráficos usam
+Unovis, a biblioteca do template de dashboard do Nuxt UI, e todo gráfico tem
+a opção de ver a tabela.
 
 ## Como funciona
 

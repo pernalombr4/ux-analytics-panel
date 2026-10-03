@@ -11,6 +11,9 @@ const props = defineProps<{
   rows?: any[]
   empty?: boolean
   emptyText?: string
+  loading?: boolean
+  /** A failed read: shown instead of "no data", which would be a different claim. */
+  error?: string | null
 }>()
 
 const showTable = ref(false)
@@ -26,7 +29,7 @@ const hasTable = computed(() => Boolean(props.columns?.length && props.rows))
           <p v-if="description" class="text-sm text-muted mt-0.5">{{ description }}</p>
         </div>
         <UButton
-          v-if="hasTable && !empty"
+          v-if="hasTable && !empty && !loading && !error"
           size="xs"
           color="neutral"
           variant="ghost"
@@ -35,7 +38,7 @@ const hasTable = computed(() => Boolean(props.columns?.length && props.rows))
           @click="showTable = !showTable"
         />
       </div>
-      <ul v-if="legend?.length && !showTable && !empty" class="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-sm text-toned">
+      <ul v-if="legend?.length && !showTable && !empty && !loading && !error" class="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-sm text-toned">
         <li v-for="item in legend" :key="item.label" class="flex items-center gap-1.5">
           <span class="size-2.5 rounded-full" :style="{ background: item.color }" />
           {{ item.label }}
@@ -43,8 +46,17 @@ const hasTable = computed(() => Boolean(props.columns?.length && props.rows))
       </ul>
     </template>
 
+    <USkeleton v-if="loading" class="h-48" />
+    <UAlert
+      v-else-if="error"
+      color="error"
+      variant="subtle"
+      icon="i-lucide-circle-x"
+      title="Não foi possível ler os dados"
+      :description="error"
+    />
     <UEmpty
-      v-if="empty"
+      v-else-if="empty"
       icon="i-lucide-chart-no-axes-column"
       :description="emptyText ?? 'Sem dados para este período.'"
       variant="naked"
