@@ -1,5 +1,4 @@
 import type { Ref } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
 import type { PageStat } from '~/components/PageStats.vue'
 
 // The Clarity side of a period: the stat cards and the friction chart, shared
@@ -11,11 +10,11 @@ const STATS = [
   { key: 'time_active_avg_seconds', label: 'Tempo ativo médio', icon: 'i-lucide-timer', format: 'seconds', direction: 'neutral', note: 'Por sessão, só o tempo com interação.' }
 ] as const
 
-export const frictionColumns: TableColumn<BarRow>[] = [
-  { accessorKey: 'label', header: 'Atrito' },
-  { id: 'now', header: '% sessões', cell: ({ row }) => formatValue(row.original.values[0] ?? null, 'pct') },
-  { id: 'before', header: 'Anterior', cell: ({ row }) => formatValue(row.original.values[1] ?? null, 'pct') },
-  { id: 'notes', header: 'Detalhe', cell: ({ row }) => (row.original.notes ?? []).join(' · ') }
+export const frictionColumns: DataColumn<BarRow>[] = [
+  { key: 'label', label: 'Atrito' },
+  { key: 'now', label: '% sessões', text: row => formatValue(row.values[0] ?? null, 'pct') },
+  { key: 'before', label: 'Anterior', text: row => formatValue(row.values[1] ?? null, 'pct') },
+  { key: 'notes', label: 'Detalhe', text: row => (row.notes ?? []).join(' · ') }
 ]
 
 export function useUsageSummary(data: Ref<KpisResponse | null | undefined>) {

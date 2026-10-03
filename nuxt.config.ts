@@ -1,12 +1,23 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2026-10-01',
-  modules: ['@nuxt/ui'],
+  modules: [
+    '@nuxt/ui',
+    // ENSPACE components, built on the same Nuxt UI 4: EnApp at the root and
+    // EnTable for every table. Only the base (dumb) components are used: the
+    // panel reads Supabase, not the ENSPACE API, so the data module
+    // (@be-enlighten/enspace-sdk-vue/nuxt, with Keycloak) stays out.
+    '@be-enlighten/enspace-sdk-ui/nuxt'
+  ],
+  enspaceUi: {
+    // No data module on purpose: this silences the build warning about it.
+    dataModuleCheck: false
+  },
   css: ['~/assets/css/main.css'],
   devtools: { enabled: false },
 
   // A static site on GitHub Pages: no server, everything runs in the browser
-  // and reads Supabase directly (see app/composables/usePainel.ts).
+  // and reads Supabase directly (see app/composables/usePanel.ts).
   ssr: false,
   nitro: { preset: 'github_pages' },
 
@@ -28,7 +39,7 @@ export default defineNuxtConfig({
     public: {
       supabaseUrl: 'https://xywuqkyclbxhrpoyplry.supabase.co',
       // Publishable key: public by design, it is meant to ship in browsers.
-      // With it, anonymous visitors reach exactly one thing, public.painel,
+      // With it, anonymous visitors reach exactly one thing, public.panel,
       // and that function answers only with the panel passphrase.
       supabaseKey: 'sb_publishable_R39lNS78E0FUb86G_KV6mQ_oBPi0JIe'
     }

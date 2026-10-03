@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { pt_br } from '@nuxt/ui/locale'
-
 // No passphrase, no app: the login screen stands in until one is accepted.
-const { chave } = usePainelChave()
+const { passphrase } = usePanelPassphrase()
 
 // As in the template: the browser bar follows the colour mode.
 const colorMode = useColorMode()
@@ -12,12 +10,13 @@ useHead({
 </script>
 
 <template>
-  <UApp :locale="pt_br">
+  <!-- EnApp (ENSPACE SDK) wraps Nuxt UI's UApp and sets the locale of both. -->
+  <EnApp locale="pt-BR">
     <NuxtLoadingIndicator />
 
-    <NuxtLayout v-if="chave">
+    <NuxtLayout v-if="passphrase">
       <NuxtPage />
     </NuxtLayout>
-    <PainelLogin v-else />
-  </UApp>
+    <PanelLogin v-else />
+  </EnApp>
 </template>

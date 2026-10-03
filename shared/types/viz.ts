@@ -1,5 +1,15 @@
 // Row shapes the chart components take (app/components/viz).
 
+// One column of a DataTable (app/components/DataTable.vue, over the ENSPACE
+// EnTable). `key` names the column and the cell slot; without `text` the cell
+// shows row[key] as it is.
+export interface DataColumn<R> {
+  key: string
+  label: string
+  align?: 'left' | 'center' | 'right'
+  text?: (row: R) => string | number | null | undefined
+}
+
 export interface RankingRow {
   key: string
   label: string

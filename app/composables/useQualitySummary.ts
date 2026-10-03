@@ -1,5 +1,4 @@
 import type { Ref } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
 import type { PageStat } from '~/components/PageStats.vue'
 
 // The ENSPACE side of a period (Chamados and Demandas of the produtos
@@ -12,16 +11,16 @@ export const MIN_VISITS = 500
 
 const pct = (part: number, whole: number) => (whole ? (100 * part) / whole : null)
 
-export const usageColumns: TableColumn<BarRow>[] = [
-  { accessorKey: 'label', header: 'Área' },
-  { id: 'visits', header: 'Visitas de tela', cell: ({ row }) => formatValue(row.original.values[0] ?? null, 'int') },
-  { id: 'notes', header: 'Detalhe', cell: ({ row }) => (row.original.notes ?? []).join(' · ') }
+export const usageColumns: DataColumn<BarRow>[] = [
+  { key: 'label', label: 'Área' },
+  { key: 'visits', label: 'Visitas de tela', text: row => formatValue(row.values[0] ?? null, 'int') },
+  { key: 'notes', label: 'Detalhe', text: row => (row.notes ?? []).join(' · ') }
 ]
 
-export const rateColumns: TableColumn<BarRow>[] = [
-  { accessorKey: 'label', header: 'Área' },
-  { id: 'rate', header: 'Chamados por mil visitas', cell: ({ row }) => formatValue(row.original.values[0] ?? null, 'decimal') },
-  { id: 'notes', header: 'Base', cell: ({ row }) => (row.original.notes ?? []).join(' · ') }
+export const rateColumns: DataColumn<BarRow>[] = [
+  { key: 'label', label: 'Área' },
+  { key: 'rate', label: 'Chamados por mil visitas', text: row => formatValue(row.values[0] ?? null, 'decimal') },
+  { key: 'notes', label: 'Base', text: row => (row.notes ?? []).join(' · ') }
 ]
 
 export function useQualitySummary(data: Ref<QualityResponse | null | undefined>) {
@@ -71,10 +70,10 @@ export function useQualitySummary(data: Ref<QualityResponse | null | undefined>)
       return { key: a.area_key ?? 'sem-area', label: areaLabel(a.area_key), values: priorities.value.map(p => a.by_priority[p.key] ?? 0), notes }
     }))
 
-  const riskColumns = computed<TableColumn<BarRow>[]>(() => [
-    { accessorKey: 'label', header: 'Área' },
-    ...priorities.value.map((p, i) => ({ id: p.key, header: p.label, cell: ({ row }: { row: { original: BarRow } }) => formatValue(row.original.values[i] ?? 0, 'int') })),
-    { id: 'notes', header: 'Detalhe', cell: ({ row }) => (row.original.notes ?? []).join(' · ') }
+  const riskColumns = computed<DataColumn<BarRow>[]>(() => [
+    { key: 'label', label: 'Área' },
+    ...priorities.value.map((p, i) => ({ key: p.key, label: p.label, text: (row: BarRow) => formatValue(row.values[i] ?? 0, 'int') })),
+    { key: 'notes', label: 'Detalhe', text: row => (row.notes ?? []).join(' · ') }
   ])
 
   const riskDescription = 'Defeitos (demandas do tipo Bug) criados no período, pela prioridade. Ordem pelo score: Crítica vale 5, Urgente 4, Alta 3, Média 2, Baixa 1.'

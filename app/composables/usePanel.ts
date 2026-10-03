@@ -1,22 +1,29 @@
 // Every number on the dashboard comes from one Supabase function,
-// public.painel, called straight from the browser. It answers only with the
+// public.panel, called straight from the browser. It answers only with the
 // panel passphrase; without it the Data API returns 403 and the app asks again.
 
-export type PainelResource =
-  | 'ping' | 'kpis' | 'telas' | 'engajamento' | 'urls'
-  | 'dispositivos' | 'tecnologia' | 'audiencia' | 'profundas' | 'saude'
-  | 'qualidade' | 'chamados'
+export type PanelResource =
+  | 'ping' | 'kpis' | 'screens' | 'engagement' | 'urls'
+  | 'devices' | 'technology' | 'audience' | 'deep_metrics' | 'health'
+  | 'quality' | 'requests'
 
-export interface PainelParams {
+export interface PanelParams {
   from?: string
   to?: string
   options?: Record<string, unknown>
 }
 
-const STORAGE_KEY = 'ux-analytics.chave'
+const STORAGE_KEY = 'ux-analytics.passphrase'
+// Key used before the English rename: read once so nobody is signed out.
+const LEGACY_STORAGE_KEY = 'ux-analytics.chave'
 
 function readStored(): string | null {
   try {
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY)
+    if (legacy !== null) {
+      localStorage.setItem(STORAGE_KEY, legacy)
+      localStorage.removeItem(LEGACY_STORAGE_KEY)
+    }
     return localStorage.getItem(STORAGE_KEY)
   } catch {
     return null
@@ -24,11 +31,11 @@ function readStored(): string | null {
 }
 
 /** The passphrase for this browser tab, remembered in localStorage when asked to. */
-export function usePainelChave() {
-  const chave = useState<string | null>('painel-chave', () => (import.meta.client ? readStored() : null))
+export function usePanelPassphrase() {
+  const passphrase = useState<string | null>('panel-passphrase', () => (import.meta.client ? readStored() : null))
 
   function set(value: string | null, remember = true) {
-    chave.value = value
+    passphrase.value = value
     try {
       if (value && remember) localStorage.setItem(STORAGE_KEY, value)
       else localStorage.removeItem(STORAGE_KEY)
@@ -37,30 +44,30 @@ export function usePainelChave() {
     }
   }
 
-  return { chave, set }
+  return { passphrase, set }
 }
 
-interface PainelConfig {
+interface PanelConfig {
   supabaseUrl: string
   supabaseKey: string
 }
 
-/** One call to public.painel. Throws a NuxtError with the HTTP status. */
-export async function fetchPainel<T>(config: PainelConfig, chave: string | null, recurso: PainelResource, params: PainelParams = {}): Promise<T> {
+/** One call to public.panel. Throws a NuxtError with the HTTP status. */
+export async function fetchPanel<T>(config: PanelConfig, passphrase: string | null, resource: PanelResource, params: PanelParams = {}): Promise<T> {
   try {
-    return await $fetch<T>(`${config.supabaseUrl}/rest/v1/rpc/painel`, {
+    return await $fetch<T>(`${config.supabaseUrl}/rest/v1/rpc/panel`, {
       method: 'POST',
       headers: { apikey: config.supabaseKey },
-      // painel only reads, so a POST is safe to repeat. Retries cover a dropped
+      // panel only reads, so a POST is safe to repeat. Retries cover a dropped
       // connection and 5xx/429; a wrong passphrase (403) fails at once.
       retry: 2,
       retryDelay: 600,
       body: {
-        p_chave: chave ?? '',
-        p_recurso: recurso,
-        p_de: params.from ?? null,
-        p_ate: params.to ?? null,
-        p_opcoes: params.options ?? {}
+        p_passphrase: passphrase ?? '',
+        p_resource: resource,
+        p_from: params.from ?? null,
+        p_to: params.to ?? null,
+        p_options: params.options ?? {}
       }
     })
   } catch (error) {
@@ -81,21 +88,21 @@ export async function fetchPainel<T>(config: PainelConfig, chave: string | null,
  * for reads that wait on a choice. A 403 means the passphrase changed: it is
  * forgotten and the login screen comes back.
  */
-export function usePainel<T>(
-  recurso: PainelResource,
-  params: () => PainelParams = () => ({}),
+export function usePanel<T>(
+  resource: PanelResource,
+  params: () => PanelParams = () => ({}),
   options: { enabled?: () => boolean } = {}
 ) {
-  const config = useRuntimeConfig().public as unknown as PainelConfig
-  const { chave, set } = usePainelChave()
+  const config = useRuntimeConfig().public as unknown as PanelConfig
+  const { passphrase, set } = usePanelPassphrase()
   const enabled = options.enabled ?? (() => true)
 
   return useAsyncData<T | null>(
-    () => `painel:${recurso}:${enabled() ? JSON.stringify(params()) : 'off'}`,
+    () => `panel:${resource}:${enabled() ? JSON.stringify(params()) : 'off'}`,
     async () => {
       if (!enabled()) return null
       try {
-        return await fetchPainel<T>(config, chave.value, recurso, params())
+        return await fetchPanel<T>(config, passphrase.value, resource, params())
       } catch (error) {
         if ((error as { statusCode?: number }).statusCode === 403) set(null)
         throw error

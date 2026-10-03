@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
 
 // Visão geral do uso: the Clarity side of the period, laid out like the home
 // page of the Nuxt UI dashboard template (stat cards, chart cards, a table).
@@ -10,10 +9,10 @@ const friction = useFrictionGroup()
 
 // Not awaited: the page draws at once and each card fills in as its read
 // arrives, instead of staying blank until the slowest of the four.
-const kpis = usePainel<KpisResponse>('kpis', () => period.query.value)
-const screensFetch = usePainel<ScreenFriction[]>('telas', () => period.query.value)
-const engagementFetch = usePainel<ScreenEngagement[]>('engajamento', () => period.query.value)
-const devicesFetch = usePainel<DeviceFriction[]>('dispositivos', () => period.query.value)
+const kpis = usePanel<KpisResponse>('kpis', () => period.query.value)
+const screensFetch = usePanel<ScreenFriction[]>('screens', () => period.query.value)
+const engagementFetch = usePanel<ScreenEngagement[]>('engagement', () => period.query.value)
+const devicesFetch = usePanel<DeviceFriction[]>('devices', () => period.query.value)
 const { data, status, error } = kpis
 const screens = computed(() => screensFetch.data.value ?? [])
 const engagement = computed(() => engagementFetch.data.value ?? [])
@@ -43,10 +42,10 @@ const affectedRows = computed<BarRow[]>(() => screens.value
     notes: [`${formatValue(s.sessions_with_pct, 'pct')} das ${formatValue(s.sessions, 'int')} sessões da tela`]
   })))
 
-const affectedColumns: TableColumn<BarRow>[] = [
-  { accessorKey: 'label', header: 'Tela' },
-  { id: 'affected', header: 'Sessões com o evento', cell: ({ row }) => formatValue(row.original.values[0] ?? null, 'int') },
-  { id: 'notes', header: 'Taxa', cell: ({ row }) => (row.original.notes ?? []).join(' · ') }
+const affectedColumns: DataColumn<BarRow>[] = [
+  { key: 'label', label: 'Tela' },
+  { key: 'affected', label: 'Sessões com o evento', text: row => formatValue(row.values[0] ?? null, 'int') },
+  { key: 'notes', label: 'Taxa', text: row => (row.notes ?? []).join(' · ') }
 ]
 
 /* ---------- onde as sessões acontecem ---------- */
@@ -63,10 +62,10 @@ const trafficRows = computed<BarRow[]>(() => [...engagement.value]
       `Páginas por sessão: ${formatValue(e.pages_per_session, 'decimal')}`]
   })))
 
-const trafficColumns: TableColumn<BarRow>[] = [
-  { accessorKey: 'label', header: 'Tela' },
-  { id: 'sessions', header: 'Sessões', cell: ({ row }) => formatValue(row.original.values[0] ?? null, 'int') },
-  { id: 'notes', header: 'Engajamento', cell: ({ row }) => (row.original.notes ?? []).join(' · ') }
+const trafficColumns: DataColumn<BarRow>[] = [
+  { key: 'label', label: 'Tela' },
+  { key: 'sessions', label: 'Sessões', text: row => formatValue(row.values[0] ?? null, 'int') },
+  { key: 'notes', label: 'Engajamento', text: row => (row.notes ?? []).join(' · ') }
 ]
 
 /* ---------- desktop × mobile ---------- */
@@ -94,10 +93,10 @@ const deviceRows = computed<BarRow[]>(() => FRICTION_GROUPS.map((group) => {
     notes: [`Desktop: ${formatValue(pick('PC')?.sessions ?? null, 'int')} sessões · Mobile: ${formatValue(pick('Mobile')?.sessions ?? null, 'int')}`]
   }
 }))
-const deviceColumns: TableColumn<BarRow>[] = [
-  { accessorKey: 'label', header: 'Atrito' },
-  { id: 'pc', header: 'Desktop', cell: ({ row }) => formatValue(row.original.values[0] ?? null, 'pct') },
-  { id: 'mobile', header: 'Mobile', cell: ({ row }) => formatValue(row.original.values[1] ?? null, 'pct') }
+const deviceColumns: DataColumn<BarRow>[] = [
+  { key: 'label', label: 'Atrito' },
+  { key: 'pc', label: 'Desktop', text: row => formatValue(row.values[0] ?? null, 'pct') },
+  { key: 'mobile', label: 'Mobile', text: row => formatValue(row.values[1] ?? null, 'pct') }
 ]
 
 /* ---------- onde olhar primeiro ---------- */
@@ -115,12 +114,12 @@ const worst = computed<WorstRow[]>(() => FRICTION_GROUPS.map((group) => {
     affected: top ? Math.round((top.sessions! * top.sessions_with_pct!) / 100) : null
   }
 }))
-const worstColumns: TableColumn<WorstRow>[] = [
-  { accessorKey: 'group', header: 'Atrito' },
-  { accessorKey: 'screen', header: 'Pior tela' },
-  { accessorKey: 'pct', header: '% sessões', cell: ({ row }) => formatValue(row.original.pct, 'pct') },
-  { accessorKey: 'sessions', header: 'Sessões', cell: ({ row }) => formatValue(row.original.sessions, 'int') },
-  { accessorKey: 'affected', header: 'Sessões com o evento', cell: ({ row }) => formatValue(row.original.affected, 'int') }
+const worstColumns: DataColumn<WorstRow>[] = [
+  { key: 'group', label: 'Atrito' },
+  { key: 'screen', label: 'Pior tela' },
+  { key: 'pct', label: '% sessões', text: row => formatValue(row.pct, 'pct') },
+  { key: 'sessions', label: 'Sessões', text: row => formatValue(row.sessions, 'int') },
+  { key: 'affected', label: 'Sessões com o evento', text: row => formatValue(row.affected, 'int') }
 ]
 </script>
 
@@ -205,7 +204,7 @@ const worstColumns: TableColumn<WorstRow>[] = [
           description="Para cada tipo de atrito, a tela com a maior taxa entre as que tiveram 30 sessões ou mais no período."
           :loading="loadingOf(screensFetch)" :error="errorOf(screensFetch)"
         >
-          <UTable :data="worst" :columns="worstColumns" class="tabular" />
+          <DataTable :rows="worst" :columns="worstColumns" />
         </VizChartCard>
       </template>
     </template>

@@ -1,8 +1,8 @@
-name: Publicar no GitHub Pages
+name: Deploy to GitHub Pages
 
-# Cada push na main gera o site estatico e publica em
+# Every push to main builds the static site and publishes it at
 # https://pernalombr4.github.io/ux-analytics-panel/
-# Pre-requisito (uma vez): Settings -> Pages -> Source: GitHub Actions.
+# One-time setup: Settings -> Pages -> Source: GitHub Actions.
 
 on:
   push:
@@ -14,7 +14,7 @@ permissions:
   pages: write
   id-token: write
 
-# Um deploy por vez; um novo push nao cancela o que ja esta publicando.
+# One deploy at a time; a new push does not cancel the one in progress.
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -36,7 +36,7 @@ jobs:
 
       - run: pnpm typecheck
 
-      - name: Gerar o site
+      - name: Generate the site
         env:
           NUXT_APP_BASE_URL: /${{ github.event.repository.name }}/
         run: pnpm generate

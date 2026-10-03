@@ -11,9 +11,14 @@
   },
   "packageManager": "pnpm@10.28.0",
   "dependencies": {
+    "@be-enlighten/enspace-sdk-core": "^0.17.0",
+    "@be-enlighten/enspace-sdk-schemas": "^0.17.0",
+    "@be-enlighten/enspace-sdk-ui": "^0.17.0",
+    "@be-enlighten/enspace-sdk-vue": "^0.17.0",
     "@iconify-json/lucide": "^1.2.138",
     "@internationalized/date": "^3.12.4",
     "@nuxt/ui": "^4.11.3",
+    "@tanstack/vue-table": "^8.21.3",
     "@unovis/ts": "1.7.1",
     "@unovis/vue": "1.7.1",
     "nuxt": "^4.5.2"

@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
 import type { PageStat } from '~/components/PageStats.vue'
 
 // Chamados: who opens them, of what type, from where and how triage closed
 // them. Every chart is a cut of one grouped table (the cube) the API returns
 // for the period.
 const period = usePeriod()
-const { data, status, error } = usePainel<RequestsResponse>('chamados', () => period.query.value)
+const { data, status, error } = usePanel<RequestsResponse>('requests', () => period.query.value)
 
 const kpis = computed(() => data.value?.kpis)
 const previous = computed(() => (period.compare.value ? data.value?.previous ?? null : null))
@@ -105,20 +104,20 @@ const outcomeRows = computed<BarRow[]>(() => rollup(r => r.outcome).map(([key, t
   notes: [`${formatValue(t.with_demand, 'int')} viraram demanda`]
 })))
 
-const simpleColumns = (header: string, value: string): TableColumn<BarRow>[] => [
-  { accessorKey: 'label', header },
-  { id: 'v', header: value, cell: ({ row }) => formatValue(row.original.values[0] ?? 0, 'int') },
-  { id: 'notes', header: 'Detalhe', cell: ({ row }) => (row.original.notes ?? []).join(' · ') }
+const simpleColumns = (label: string, value: string): DataColumn<BarRow>[] => [
+  { key: 'label', label },
+  { key: 'v', label: value, text: row => formatValue(row.values[0] ?? 0, 'int') },
+  { key: 'notes', label: 'Detalhe', text: row => (row.notes ?? []).join(' · ') }
 ]
-const typeColumns: TableColumn<BarRow>[] = [
-  { accessorKey: 'label', header: 'Tipo' },
-  { id: 'v', header: 'Chamados', cell: ({ row }) => formatValue(row.original.values.reduce<number>((sum, v) => sum + (v ?? 0), 0), 'int') },
-  { id: 'notes', header: 'Detalhe', cell: ({ row }) => (row.original.notes ?? []).join(' · ') }
+const typeColumns: DataColumn<BarRow>[] = [
+  { key: 'label', label: 'Tipo' },
+  { key: 'v', label: 'Chamados', text: row => formatValue(row.values.reduce<number>((sum, v) => sum + (v ?? 0), 0), 'int') },
+  { key: 'notes', label: 'Detalhe', text: row => (row.notes ?? []).join(' · ') }
 ]
-const groupColumns: TableColumn<BarRow>[] = [
-  { accessorKey: 'label', header: 'Cliente' },
-  ...REQUEST_TYPE_GROUPS.map((g, i) => ({ id: g.key, header: g.label, cell: ({ row }: { row: { original: BarRow } }) => formatValue(row.original.values[i] ?? 0, 'int') })),
-  { id: 'notes', header: 'Detalhe', cell: ({ row }) => (row.original.notes ?? []).join(' · ') }
+const groupColumns: DataColumn<BarRow>[] = [
+  { key: 'label', label: 'Cliente' },
+  ...REQUEST_TYPE_GROUPS.map((g, i) => ({ key: g.key, label: g.label, text: (row: BarRow) => formatValue(row.values[i] ?? 0, 'int') })),
+  { key: 'notes', label: 'Detalhe', text: row => (row.notes ?? []).join(' · ') }
 ]
 </script>
 

@@ -1,26 +1,26 @@
 <script setup lang="ts">
 // Shown instead of the app until the panel passphrase is known. The passphrase
-// is checked against public.painel ('ping') before anything is remembered.
-const { set } = usePainelChave()
+// is checked against public.panel ('ping') before anything is remembered.
+const { set } = usePanelPassphrase()
 const config = useRuntimeConfig().public as unknown as { supabaseUrl: string, supabaseKey: string }
 
-const senha = ref('')
-const lembrar = ref(true)
-const mostrar = ref(false)
-const enviando = ref(false)
-const erro = ref<string | null>(null)
+const passphrase = ref('')
+const remember = ref(true)
+const reveal = ref(false)
+const sending = ref(false)
+const failure = ref<string | null>(null)
 
-async function entrar() {
-  if (!senha.value || enviando.value) return
-  enviando.value = true
-  erro.value = null
+async function signIn() {
+  if (!passphrase.value || sending.value) return
+  sending.value = true
+  failure.value = null
   try {
-    await fetchPainel(config, senha.value, 'ping')
-    set(senha.value, lembrar.value)
+    await fetchPanel(config, passphrase.value, 'ping')
+    set(passphrase.value, remember.value)
   } catch (error) {
-    erro.value = (error as { statusMessage?: string }).statusMessage ?? 'Não foi possível entrar.'
+    failure.value = (error as { statusMessage?: string }).statusMessage ?? 'Não foi possível entrar.'
   } finally {
-    enviando.value = false
+    sending.value = false
   }
 }
 </script>
@@ -28,7 +28,7 @@ async function entrar() {
 <template>
   <div class="min-h-dvh flex items-center justify-center px-4 py-10 bg-elevated/25">
     <UCard class="w-full max-w-sm">
-      <form class="flex flex-col gap-5" @submit.prevent="entrar">
+      <form class="flex flex-col gap-5" @submit.prevent="signIn">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-activity" class="size-6 text-primary" />
           <div>
@@ -37,11 +37,11 @@ async function entrar() {
           </div>
         </div>
 
-        <UFormField label="Senha do painel" name="senha" :error="erro ?? undefined">
+        <UFormField label="Senha do painel" name="passphrase" :error="failure ?? undefined">
           <UInput
-            id="senha"
-            v-model="senha"
-            :type="mostrar ? 'text' : 'password'"
+            id="passphrase"
+            v-model="passphrase"
+            :type="reveal ? 'text' : 'password'"
             autocomplete="current-password"
             autofocus
             class="w-full"
@@ -52,17 +52,17 @@ async function entrar() {
                 color="neutral"
                 variant="link"
                 size="sm"
-                :icon="mostrar ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                :aria-label="mostrar ? 'Esconder senha' : 'Mostrar senha'"
-                @click="mostrar = !mostrar"
+                :icon="reveal ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                :aria-label="reveal ? 'Esconder senha' : 'Mostrar senha'"
+                @click="reveal = !reveal"
               />
             </template>
           </UInput>
         </UFormField>
 
-        <UCheckbox id="lembrar" v-model="lembrar" label="Lembrar neste navegador" />
+        <UCheckbox id="remember" v-model="remember" label="Lembrar neste navegador" />
 
-        <UButton type="submit" block :loading="enviando" :disabled="!senha" icon="i-lucide-lock-open">
+        <UButton type="submit" block :loading="sending" :disabled="!passphrase" icon="i-lucide-lock-open">
           Entrar
         </UButton>
 

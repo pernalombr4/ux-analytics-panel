@@ -6,7 +6,7 @@
 const { links, footerLinks, open, go } = useNavigation()
 const period = usePeriod()
 const colorMode = useColorMode()
-const { set: setChave } = usePainelChave()
+const { set: setPassphrase } = usePanelPassphrase()
 usePageShortcuts()
 
 // Pages by section, as in the sidebar.
@@ -48,7 +48,7 @@ const groups = computed(() => [...pageGroups, {
 }, {
   id: 'acesso',
   label: 'Acesso',
-  items: [{ label: 'Sair e esquecer a senha neste navegador', icon: 'i-lucide-log-out', onSelect: () => setChave(null) }]
+  items: [{ label: 'Sair e esquecer a senha neste navegador', icon: 'i-lucide-log-out', onSelect: () => setPassphrase(null) }]
 }])
 </script>
 

@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
 
 // Riscos por área: Chamados and Demandas of the ENSPACE produtos workspace,
 // by area of the system. Only what the workspace records: how each area is
 // used (Clarity) meets these numbers on the Panorama. Defects and requests
 // sit side by side and are never added up.
 const period = usePeriod()
-const { data, status, error } = usePainel<QualityResponse>('qualidade', () => period.query.value)
+const { data, status, error } = usePanel<QualityResponse>('quality', () => period.query.value)
 
 // Stat cards and the risk chart: shared with the Panorama.
 const { kpis, loaded, areaLabel, stats, prioritySeries, riskRows, riskColumns, riskDescription } = useQualitySummary(data)
@@ -26,11 +25,11 @@ const requestRows = computed<BarRow[]>(() => (data.value?.areas ?? [])
     if (a.csat_n) notes.push(`CSAT ${formatValue(a.csat, 'decimal')} (${formatValue(a.csat_n, 'int')} respostas)`)
     return { key: a.area_key ?? 'sem-area', label: areaLabel(a.area_key), values: [a.request_bugs, a.requests - a.request_bugs], notes }
   }))
-const requestColumns: TableColumn<BarRow>[] = [
-  { accessorKey: 'label', header: 'Área' },
-  { id: 'bug', header: 'Bug', cell: ({ row }) => formatValue(row.original.values[0] ?? 0, 'int') },
-  { id: 'outros', header: 'Outros tipos', cell: ({ row }) => formatValue(row.original.values[1] ?? 0, 'int') },
-  { id: 'notes', header: 'Detalhe', cell: ({ row }) => (row.original.notes ?? []).join(' · ') }
+const requestColumns: DataColumn<BarRow>[] = [
+  { key: 'label', label: 'Área' },
+  { key: 'bug', label: 'Bug', text: row => formatValue(row.values[0] ?? 0, 'int') },
+  { key: 'outros', label: 'Outros tipos', text: row => formatValue(row.values[1] ?? 0, 'int') },
+  { key: 'notes', label: 'Detalhe', text: row => (row.notes ?? []).join(' · ') }
 ]
 
 /* ---------- tabela ---------- */
@@ -39,16 +38,16 @@ interface AreaRow extends QualityArea { label: string }
 const tableRows = computed<AreaRow[]>(() => (data.value?.areas ?? [])
   .map(a => ({ ...a, label: areaLabel(a.area_key) }))
   .sort((a, b) => Number(a.area_key === null) - Number(b.area_key === null) || b.score - a.score || b.requests - a.requests))
-const tableColumns: TableColumn<AreaRow>[] = [
-  { accessorKey: 'label', header: 'Área' },
-  { accessorKey: 'requests', header: 'Chamados', cell: ({ row }) => formatValue(row.original.requests, 'int') },
-  { accessorKey: 'request_bugs', header: 'Bugs relatados', cell: ({ row }) => formatValue(row.original.request_bugs, 'int') },
-  { accessorKey: 'recurrences', header: 'Recorrências', cell: ({ row }) => formatValue(row.original.recurrences, 'int') },
-  { accessorKey: 'defects', header: 'Defeitos', cell: ({ row }) => formatValue(row.original.defects, 'int') },
-  { accessorKey: 'defects_open', header: 'Abertos', cell: ({ row }) => formatValue(row.original.defects_open, 'int') },
-  { accessorKey: 'score', header: 'Score', cell: ({ row }) => formatValue(row.original.score, 'int') },
-  { accessorKey: 'from_requests', header: 'Vieram de chamado', cell: ({ row }) => formatValue(row.original.from_requests, 'int') },
-  { accessorKey: 'csat', header: 'CSAT', cell: ({ row }) => row.original.csat_n ? `${formatValue(row.original.csat, 'decimal')} (${row.original.csat_n})` : '–' }
+const tableColumns: DataColumn<AreaRow>[] = [
+  { key: 'label', label: 'Área' },
+  { key: 'requests', label: 'Chamados', text: row => formatValue(row.requests, 'int') },
+  { key: 'request_bugs', label: 'Bugs relatados', text: row => formatValue(row.request_bugs, 'int') },
+  { key: 'recurrences', label: 'Recorrências', text: row => formatValue(row.recurrences, 'int') },
+  { key: 'defects', label: 'Defeitos', text: row => formatValue(row.defects, 'int') },
+  { key: 'defects_open', label: 'Abertos', text: row => formatValue(row.defects_open, 'int') },
+  { key: 'score', label: 'Score', text: row => formatValue(row.score, 'int') },
+  { key: 'from_requests', label: 'Vieram de chamado', text: row => formatValue(row.from_requests, 'int') },
+  { key: 'csat', label: 'CSAT', text: row => row.csat_n ? `${formatValue(row.csat, 'decimal')} (${row.csat_n})` : '–' }
 ]
 
 /* ---------- como ler ---------- */
@@ -146,7 +145,7 @@ const caveats = computed(() => {
           title="Todas as áreas"
           description="Defeitos e chamados lado a lado, nunca somados. Score: soma dos pesos de prioridade dos defeitos. O uso de cada área, do Clarity, está no Panorama."
         >
-          <UTable :data="tableRows" :columns="tableColumns" class="tabular" />
+          <DataTable :rows="tableRows" :columns="tableColumns" />
         </VizChartCard>
       </template>
     </template>

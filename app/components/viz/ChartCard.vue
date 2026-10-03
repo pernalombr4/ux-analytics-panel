@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
-
 // Every chart has a table view: identity never rests on colour alone, and
 // some readers simply want the numbers.
 const props = defineProps<{
   title: string
   description?: string
   legend?: { label: string, color: string }[]
-  columns?: TableColumn<any>[]
+  columns?: DataColumn<any>[]
   rows?: any[]
   empty?: boolean
   emptyText?: string
@@ -62,7 +60,7 @@ const hasTable = computed(() => Boolean(props.columns?.length && props.rows))
       variant="naked"
       size="sm"
     />
-    <UTable v-else-if="showTable" :data="rows" :columns="columns" class="tabular" />
+    <DataTable v-else-if="showTable && columns && rows" :columns="columns" :rows="rows" />
     <slot v-else />
   </UCard>
 </template>

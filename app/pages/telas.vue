@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
 
 const period = usePeriod()
 const friction = useFrictionGroup()
@@ -11,8 +10,8 @@ const MIN_OPTIONS = [
 ]
 
 const [{ data: screens, error }, { data: engagement }] = await Promise.all([
-  usePainel<ScreenFriction[]>('telas', () => period.query.value),
-  usePainel<ScreenEngagement[]>('engajamento', () => period.query.value)
+  usePanel<ScreenFriction[]>('screens', () => period.query.value),
+  usePanel<ScreenEngagement[]>('engagement', () => period.query.value)
 ])
 const engagementOf = computed(() => new Map((engagement.value ?? []).map(row => [row.screen, row])))
 
@@ -40,20 +39,20 @@ const points = computed<ScatterPoint[]>(() => rows.value.map(row => ({
   tooltip: `${row.screen}: ${formatValue(row.sessions_with_pct, 'pct')} em ${formatValue(row.sessions, 'int')} sessões`
 })))
 
-const columns: TableColumn<ScreenFriction>[] = [
-  { accessorKey: 'screen', header: 'Tela' },
-  { accessorKey: 'sessions_with_pct', header: '% sessões', cell: ({ row }) => formatValue(row.original.sessions_with_pct, 'pct') },
-  { accessorKey: 'events', header: 'Eventos', cell: ({ row }) => formatValue(row.original.events, 'int') },
-  { accessorKey: 'sessions', header: 'Sessões', cell: ({ row }) => formatValue(row.original.sessions, 'int') },
-  { id: 'active_time', header: 'Tempo ativo', cell: ({ row }) => formatValue(engagementOf.value.get(row.original.screen)?.active_time_avg_seconds, 'seconds') },
-  { id: 'pages_per_session', header: 'Páginas/sessão', cell: ({ row }) => formatValue(engagementOf.value.get(row.original.screen)?.pages_per_session, 'decimal') },
-  { accessorKey: 'days_present', header: 'Dias com dado' }
+const columns: DataColumn<ScreenFriction>[] = [
+  { key: 'screen', label: 'Tela' },
+  { key: 'sessions_with_pct', label: '% sessões', text: row => formatValue(row.sessions_with_pct, 'pct') },
+  { key: 'events', label: 'Eventos', text: row => formatValue(row.events, 'int') },
+  { key: 'sessions', label: 'Sessões', text: row => formatValue(row.sessions, 'int') },
+  { key: 'active_time', label: 'Tempo ativo', text: row => formatValue(engagementOf.value.get(row.screen)?.active_time_avg_seconds, 'seconds') },
+  { key: 'pages_per_session', label: 'Páginas/sessão', text: row => formatValue(engagementOf.value.get(row.screen)?.pages_per_session, 'decimal') },
+  { key: 'days_present', label: 'Dias com dado' }
 ]
 
 // Drill-down: the URLs of the selected screen (top cut, so partial coverage).
 const selected = ref<string | null>(null)
 // Fetched only when a screen is picked, and again if the period changes.
-const { data: urls } = usePainel<UrlFriction[]>(
+const { data: urls } = usePanel<UrlFriction[]>(
   'urls',
   () => ({ ...period.query.value, options: { screen: selected.value } }),
   { enabled: () => !!selected.value }

@@ -1,4 +1,4 @@
-// Shapes of the quality resources of public.painel (sql/14 of ux-analytics):
+// Shapes of the quality resources of public.panel (sql/14 of ux-analytics):
 // Chamados and Demandas of the ENSPACE produtos workspace.
 
 export interface QualityKpis {

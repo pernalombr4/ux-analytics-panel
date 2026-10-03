@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
 
 // Panorama: the two sources together. Clarity says how the product is used;
 // ENSPACE, what the produtos workspace records about it (requests and
@@ -10,8 +9,8 @@ const period = usePeriod()
 const { target } = useNavigation()
 
 // Not awaited: each side fills in as its read arrives.
-const usageFetch = usePainel<KpisResponse>('kpis', () => period.query.value)
-const qualityFetch = usePainel<QualityResponse>('qualidade', () => period.query.value)
+const usageFetch = usePanel<KpisResponse>('kpis', () => period.query.value)
+const qualityFetch = usePanel<QualityResponse>('quality', () => period.query.value)
 
 const usage = useUsageSummary(usageFetch.data)
 const quality = useQualitySummary(qualityFetch.data)
@@ -57,14 +56,14 @@ const areaRows = computed<AreaRow[]>(() => {
   }).sort((x, y) => Number(x.key === 'sem-area') - Number(y.key === 'sem-area')
     || y.score - x.score || y.requests - x.requests || (y.visits ?? 0) - (x.visits ?? 0))
 })
-const areaColumns: TableColumn<AreaRow>[] = [
-  { accessorKey: 'label', header: 'Área' },
-  { accessorKey: 'visits', header: 'Visitas de tela', cell: ({ row }) => formatValue(row.original.visits, 'int') },
-  { accessorKey: 'requests', header: 'Chamados', cell: ({ row }) => formatValue(row.original.requests, 'int') },
-  { accessorKey: 'rate', header: 'Chamados / mil visitas', cell: ({ row }) => formatValue(row.original.rate, 'decimal') },
-  { accessorKey: 'defects', header: 'Defeitos', cell: ({ row }) => formatValue(row.original.defects, 'int') },
-  { accessorKey: 'defects_open', header: 'Abertos', cell: ({ row }) => formatValue(row.original.defects_open, 'int') },
-  { accessorKey: 'score', header: 'Score', cell: ({ row }) => formatValue(row.original.score, 'int') }
+const areaColumns: DataColumn<AreaRow>[] = [
+  { key: 'label', label: 'Área' },
+  { key: 'visits', label: 'Visitas de tela', text: row => formatValue(row.visits, 'int') },
+  { key: 'requests', label: 'Chamados', text: row => formatValue(row.requests, 'int') },
+  { key: 'rate', label: 'Chamados / mil visitas', text: row => formatValue(row.rate, 'decimal') },
+  { key: 'defects', label: 'Defeitos', text: row => formatValue(row.defects, 'int') },
+  { key: 'defects_open', label: 'Abertos', text: row => formatValue(row.defects_open, 'int') },
+  { key: 'score', label: 'Score', text: row => formatValue(row.score, 'int') }
 ]
 </script>
 
@@ -170,7 +169,7 @@ const areaColumns: TableColumn<AreaRow>[] = [
           title="Uso e qualidade por área"
           :description="`Visitas do Clarity ao lado de chamados e defeitos do ENSPACE, nunca somados. Chamados por mil visitas só a partir de ${MIN_VISITS} visitas.`"
         >
-          <UTable :data="areaRows" :columns="areaColumns" class="tabular" />
+          <DataTable :rows="areaRows" :columns="areaColumns" />
         </VizChartCard>
       </template>
     </template>

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
 
 const period = usePeriod()
 const friction = useFrictionGroup()
@@ -11,8 +10,8 @@ const MIN_OPTIONS = [
 ]
 
 const [{ data: screens, error }, { data: devices }] = await Promise.all([
-  usePainel<ScreenFriction[]>('telas', () => ({ ...period.query.value, options: { device: true } })),
-  usePainel<DeviceFriction[]>('dispositivos', () => period.query.value)
+  usePanel<ScreenFriction[]>('screens', () => ({ ...period.query.value, options: { device: true } })),
+  usePanel<DeviceFriction[]>('devices', () => period.query.value)
 ])
 
 const SERIES = [
@@ -45,11 +44,11 @@ const dumbbell = computed<DumbbellRow[]>(() => pairs.value.slice(0, 15).map(p =>
   detail: `${formatValue(p.desktop!.sessions, 'int')} sessões desktop · ${formatValue(p.mobile!.sessions, 'int')} mobile`
 })))
 
-const pairColumns: TableColumn<Pair>[] = [
-  { accessorKey: 'screen', header: 'Tela' },
-  { id: 'desktop', header: 'Desktop', cell: ({ row }) => formatValue(row.original.desktop?.sessions_with_pct, 'pct') },
-  { id: 'mobile', header: 'Mobile', cell: ({ row }) => formatValue(row.original.mobile?.sessions_with_pct, 'pct') },
-  { id: 'mobile_sessions', header: 'Sessões mobile', cell: ({ row }) => formatValue(row.original.mobile?.sessions, 'int') }
+const pairColumns: DataColumn<Pair>[] = [
+  { key: 'screen', label: 'Tela' },
+  { key: 'desktop', label: 'Desktop', text: row => formatValue(row.desktop?.sessions_with_pct, 'pct') },
+  { key: 'mobile', label: 'Mobile', text: row => formatValue(row.mobile?.sessions_with_pct, 'pct') },
+  { key: 'mobile_sessions', label: 'Sessões mobile', text: row => formatValue(row.mobile?.sessions, 'int') }
 ]
 
 const grouped = computed<GroupedRow[]>(() => FRICTION_GROUPS.map(group => ({

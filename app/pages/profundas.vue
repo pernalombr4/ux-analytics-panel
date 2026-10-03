@@ -5,7 +5,7 @@
 const route = useRoute()
 const router = useRouter()
 
-const { data, error } = await usePainel<DeepResponse>('profundas', () => ({
+const { data, error } = await usePanel<DeepResponse>('deep_metrics', () => ({
   options: { window: String(route.query.window ?? ''), end: String(route.query.end ?? '') }
 }))
 

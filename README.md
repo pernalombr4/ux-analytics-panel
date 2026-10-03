@@ -44,11 +44,11 @@ dia, pela regra acima.
 Site estático (Nuxt 4 + Nuxt UI) no GitHub Pages. Ele roda no navegador e lê
 o Supabase direto, pela Data API, com a chave publicável do projeto. Essa
 chave é pública por desenho: com ela, um visitante alcança uma única coisa, a
-função `public.painel`, e ela só responde com a senha do painel. As tabelas
+função `public.panel`, e ela só responde com a senha do painel. As tabelas
 continuam fechadas.
 
-A coleta, o modelo de dados e a função `painel` ficam no repositório privado
-`ux-analytics` (`sql/11_painel_api.sql`).
+A coleta, o modelo de dados e a função `panel` ficam no repositório privado
+`ux-analytics` (`sql/11_painel_api.sql`, com os nomes em inglês de `sql/16_english_names.sql`).
 
 ## Senha do painel
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
+import type { EnTableColumn } from '@be-enlighten/enspace-sdk-ui/base'
 
-const { data, error } = await usePainel<HealthResponse>('saude')
+const { data, error } = await usePanel<HealthResponse>('health')
 
 const TYPES = ['overall', 'url', 'device', 'browser_os', 'url_device', 'screen', 'screen_device']
 const TYPE_LABELS: Record<string, string> = {
@@ -17,6 +17,12 @@ const days = computed(() => {
   return [...byDay.entries()].map(([day, types]) => ({ day, types }))
 })
 
+// One row per day, one column per breakdown: the cell is the status icon.
+const coverageColumns: EnTableColumn[] = [
+  { key: 'day', label: 'Dia' },
+  ...TYPES.map(type => ({ key: type, label: TYPE_LABELS[type] ?? type, align: 'center' as const }))
+]
+
 const gaps = computed(() => (data.value?.coverage ?? []).filter(r => !r.curated).length)
 
 // Status is never colour alone: icon + words.
@@ -26,28 +32,28 @@ function state(row?: CoverageRow) {
   return { icon: 'i-lucide-circle-check', color: 'var(--viz-good)', text: 'Ok' }
 }
 
-const qualityColumns: TableColumn<QualityRow>[] = [
-  { accessorKey: 'severity', header: 'Gravidade' },
-  { accessorKey: 'check_name', header: 'Problema' },
-  { accessorKey: 'ref', header: 'Onde' },
-  { accessorKey: 'rows', header: 'Linhas' },
-  { accessorKey: 'detail', header: 'O que fazer' }
+const qualityColumns: DataColumn<QualityRow>[] = [
+  { key: 'severity', label: 'Gravidade' },
+  { key: 'check_name', label: 'Problema' },
+  { key: 'ref', label: 'Onde' },
+  { key: 'rows', label: 'Linhas' },
+  { key: 'detail', label: 'O que fazer' }
 ]
 
-const reviewedColumns: TableColumn<ReviewedRow>[] = [
-  { accessorKey: 'check_name', header: 'Problema' },
-  { accessorKey: 'ref', header: 'Onde' },
-  { accessorKey: 'decision', header: 'Decisão', meta: { class: { td: 'whitespace-normal min-w-80' } } },
-  { accessorKey: 'reviewed_at', header: 'Revisado em', cell: ({ row }) => formatDay(row.original.reviewed_at.slice(0, 10)) }
+const reviewedColumns: DataColumn<ReviewedRow>[] = [
+  { key: 'check_name', label: 'Problema' },
+  { key: 'ref', label: 'Onde' },
+  { key: 'decision', label: 'Decisão' },
+  { key: 'reviewed_at', label: 'Revisado em', text: row => formatDay(row.reviewed_at.slice(0, 10)) }
 ]
 
-const callColumns: TableColumn<CollectionCall>[] = [
-  { accessorKey: 'metric_date', header: 'Dia', cell: ({ row }) => formatDay(row.original.metric_date) },
-  { accessorKey: 'breakdown_type', header: 'Recorte', cell: ({ row }) => TYPE_LABELS[row.original.breakdown_type] ?? row.original.breakdown_type },
-  { accessorKey: 'fetched_local', header: 'Coletado em (SP)', cell: ({ row }) => row.original.fetched_local.slice(0, 16).replace('T', ' ') },
-  { accessorKey: 'hours_off_civil_day', header: 'Desvio (h)', cell: ({ row }) => formatValue(row.original.hours_off_civil_day, 'decimal') },
-  { accessorKey: 'http_status', header: 'HTTP' },
-  { accessorKey: 'is_canonical', header: 'Usada', cell: ({ row }) => (row.original.is_canonical ? 'sim' : 'não') }
+const callColumns: DataColumn<CollectionCall>[] = [
+  { key: 'metric_date', label: 'Dia', text: row => formatDay(row.metric_date) },
+  { key: 'breakdown_type', label: 'Recorte', text: row => TYPE_LABELS[row.breakdown_type] ?? row.breakdown_type },
+  { key: 'fetched_local', label: 'Coletado em (SP)', text: row => row.fetched_local.slice(0, 16).replace('T', ' ') },
+  { key: 'hours_off_civil_day', label: 'Desvio (h)', text: row => formatValue(row.hours_off_civil_day, 'decimal') },
+  { key: 'http_status', label: 'HTTP' },
+  { key: 'is_canonical', label: 'Usada', text: row => (row.is_canonical ? 'sim' : 'não') }
 ]
 </script>
 
@@ -79,7 +85,7 @@ const callColumns: TableColumn<CollectionCall>[] = [
         </div>
 
         <VizChartCard title="Qualidade" description="O que precisa de revisão antes de confiar num número." :empty="!data.quality.length" empty-text="Nada a revisar.">
-          <UTable :data="data.quality" :columns="qualityColumns" />
+          <DataTable :rows="data.quality" :columns="qualityColumns" />
         </VizChartCard>
 
         <VizChartCard
@@ -87,34 +93,24 @@ const callColumns: TableColumn<CollectionCall>[] = [
           title="Já revisados"
           description="Problemas que não têm conserto e já foram analisados. Saem da lista acima, mas o dado continua marcado aqui."
         >
-          <UTable :data="data.reviewed" :columns="reviewedColumns" />
+          <DataTable :rows="data.reviewed" :columns="reviewedColumns" />
         </VizChartCard>
 
         <VizChartCard title="Cobertura por dia" description="Cada dia precisa dos sete recortes. Um dia perdido não volta: a API do Clarity só devolve as últimas 24 a 72 horas." :empty="!days.length">
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="text-muted">
-                  <th class="text-left font-normal py-1 pe-3">Dia</th>
-                  <th v-for="t in TYPES" :key="t" class="font-normal py-1 px-2 text-center whitespace-nowrap">{{ TYPE_LABELS[t] }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="d in days" :key="d.day" class="border-t border-default">
-                  <td class="py-1 pe-3 tabular whitespace-nowrap">{{ formatDay(d.day) }}</td>
-                  <td v-for="t in TYPES" :key="t" class="py-1 px-2 text-center">
-                    <UTooltip :text="state(d.types[t]).text">
-                      <UIcon :name="state(d.types[t]).icon" class="size-4" :style="{ color: state(d.types[t]).color }" :aria-label="state(d.types[t]).text" />
-                    </UTooltip>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <EnTable :columns="coverageColumns" :rows="days" :column-sizing="{ day: 120 }" class="tabular">
+            <template #cell-day="{ row }">
+              {{ formatDay(row.day) }}
+            </template>
+            <template v-for="t in TYPES" :key="t" #[`cell-${t}`]="{ row }">
+              <UTooltip :text="state(row.types[t]).text">
+                <UIcon :name="state(row.types[t]).icon" class="size-4" :style="{ color: state(row.types[t]).color }" :aria-label="state(row.types[t]).text" />
+              </UTooltip>
+            </template>
+          </EnTable>
         </VizChartCard>
 
         <VizChartCard title="Coletas fora do horário ou com falha" description="Janelas a mais de 3 horas do dia civil, ou chamadas que falharam. 'Usada' diz qual resposta o transform escreveu para o dia." :empty="!data.offHours.length" empty-text="Todas as coletas foram feitas no horário.">
-          <UTable :data="data.offHours" :columns="callColumns" class="tabular" />
+          <DataTable :rows="data.offHours" :columns="callColumns" />
         </VizChartCard>
       </template>
     </template>

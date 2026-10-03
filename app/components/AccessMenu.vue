@@ -8,7 +8,7 @@ defineProps<{ collapsed?: boolean }>()
 
 const colorMode = useColorMode()
 const appConfig = useAppConfig()
-const { set: setChave } = usePainelChave()
+const { set: setPassphrase } = usePanelPassphrase()
 
 const colors = ['red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose']
 const neutrals = ['slate', 'gray', 'zinc', 'neutral', 'stone']
@@ -91,7 +91,7 @@ const items = computed<DropdownMenuItem[][]>(() => [[{
 }], [{
   label: 'Sair e esquecer a senha neste navegador',
   icon: 'i-lucide-log-out',
-  onSelect: () => setChave(null)
+  onSelect: () => setPassphrase(null)
 }]])
 </script>
 

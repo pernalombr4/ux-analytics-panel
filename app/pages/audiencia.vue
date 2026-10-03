@@ -3,8 +3,8 @@ const period = usePeriod()
 const friction = useFrictionGroup()
 
 const [{ data: audience, error }, { data: tech }] = await Promise.all([
-  usePainel<AudienceRow[]>('audiencia', () => period.query.value),
-  usePainel<TechFriction[]>('tecnologia', () => period.query.value)
+  usePanel<AudienceRow[]>('audience', () => period.query.value),
+  usePanel<TechFriction[]>('technology', () => period.query.value)
 ])
 
 /** Top N of one list, the tail folded into "Outros" - never a 9th colour. */
