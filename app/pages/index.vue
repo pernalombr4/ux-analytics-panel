@@ -1,169 +1,70 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import type { PageStat } from '~/components/PageStats.vue'
 
-// Panorama: the period at a glance, laid out like the home page of the Nuxt UI
-// dashboard template (stat cards, chart cards, a table). Product rule: no line
-// over days; every chart aggregates the chosen period, and the comparison with
-// the previous period is a second bar, not a time axis.
+// Panorama: the two sources together. Clarity says how the product is used;
+// ENSPACE, what the produtos workspace records about it (requests and
+// defects); the area of the system is where they meet. Each source has its
+// own section in the sidebar; this page only puts them side by side.
+// Product rule: no line over days; every chart aggregates the chosen period.
 const period = usePeriod()
-const friction = useFrictionGroup()
+const { target } = useNavigation()
 
-// Not awaited: this is the first page after the passphrase, and awaiting
-// would hold the whole screen blank until the slowest of the four reads.
-// The page draws at once and each card fills in as its read arrives.
-const kpis = usePainel<KpisResponse>('kpis', () => period.query.value)
-const screensFetch = usePainel<ScreenFriction[]>('telas', () => period.query.value)
-const engagementFetch = usePainel<ScreenEngagement[]>('engajamento', () => period.query.value)
-const devicesFetch = usePainel<DeviceFriction[]>('dispositivos', () => period.query.value)
-const { data, status, error } = kpis
-const screens = computed(() => screensFetch.data.value ?? [])
-const engagement = computed(() => engagementFetch.data.value ?? [])
-const devices = computed(() => devicesFetch.data.value ?? [])
+// Not awaited: each side fills in as its read arrives.
+const usageFetch = usePainel<KpisResponse>('kpis', () => period.query.value)
+const qualityFetch = usePainel<QualityResponse>('qualidade', () => period.query.value)
 
-// Each chart card reports its own read: a failed request is not "no data".
-type Fetch = typeof screensFetch | typeof engagementFetch | typeof devicesFetch
+const usage = useUsageSummary(usageFetch.data)
+const quality = useQualitySummary(qualityFetch.data)
+const { current, frictionSeries, frictionRows, frictionDescription } = usage
+const { loaded, prioritySeries, riskRows, riskColumns, riskDescription, usageRows, usageDescription, rateRows, rateLeftOut, rateDescription } = quality
+
+// Each block reports its own read: a failed request is not "no data".
+type Fetch = typeof usageFetch | typeof qualityFetch
 const loadingOf = (f: Fetch) => f.status.value === 'pending' && !f.data.value
 const errorOf = (f: Fetch) => (f.error.value ? f.error.value.statusMessage || f.error.value.message : null)
 
-const current = computed(() => data.value?.current)
-const previous = computed(() => (period.compare.value ? data.value?.previous ?? null : null))
+/* ---------- áreas: uso e qualidade ---------- */
 
-/* ---------- stat cards ---------- */
-
-const STATS = [
-  { key: 'sessions', label: 'Sessões', icon: 'i-lucide-activity', format: 'int', direction: 'higher', note: 'Soma dos dias coletados.' },
-  { key: 'avg_daily_users', label: 'Usuários por dia', icon: 'i-lucide-users', format: 'decimal', direction: 'higher', note: 'Média diária: usuários não se somam entre dias.' },
-  { key: 'pages_per_session', label: 'Páginas por sessão', icon: 'i-lucide-layers', format: 'decimal', direction: 'neutral', note: 'Média do período. Mais não é melhor nem pior.' },
-  { key: 'time_active_avg_seconds', label: 'Tempo ativo médio', icon: 'i-lucide-timer', format: 'seconds', direction: 'neutral', note: 'Por sessão, só o tempo com interação.' }
-] as const
-
-const stats = computed<PageStat[]>(() => STATS.map(stat => ({
-  ...stat,
-  value: (current.value?.[stat.key] ?? null) as number | null,
-  previous: (previous.value?.[stat.key] ?? null) as number | null
-})))
-
-/* ---------- atrito: período atual × anterior ---------- */
-
-const frictionSeries = computed<BarSeries[]>(() => previous.value
-  ? [{ name: 'Período atual', color: 'var(--viz-series-1)' }, { name: 'Período anterior', color: 'var(--viz-other)' }]
-  : [{ name: 'Período atual', color: 'var(--viz-series-1)' }])
-
-const frictionRows = computed<BarRow[]>(() => FRICTION_GROUPS.map((group) => {
-  const key = `${group.column}_sessions_pct` as keyof PeriodKpis
-  const now = (current.value?.[key] ?? null) as number | null
-  const before = (previous.value?.[key] ?? null) as number | null
-  const events = (current.value?.[`${group.column}_events` as keyof PeriodKpis] ?? null) as number | null
-  const notes = [`${formatValue(events, 'int')} eventos no período`]
-  if (now !== null && before !== null) {
-    const diff = now - before
-    notes.push(`${diff > 0 ? '+' : ''}${formatValue(diff, 'decimal')} p.p. (${diff < 0 ? 'melhor' : diff > 0 ? 'pior' : 'igual'})`)
-  }
-  return { key: group.key, label: group.label, values: previous.value ? [now, before] : [now], notes }
-}))
-
-const frictionColumns: TableColumn<BarRow>[] = [
-  { accessorKey: 'label', header: 'Atrito' },
-  { id: 'now', header: '% sessões', cell: ({ row }) => formatValue(row.original.values[0] ?? null, 'pct') },
-  { id: 'before', header: 'Anterior', cell: ({ row }) => formatValue(row.original.values[1] ?? null, 'pct') },
-  { id: 'notes', header: 'Detalhe', cell: ({ row }) => (row.original.notes ?? []).join(' · ') }
-]
-
-/* ---------- onde o atrito pesa mais ---------- */
-
-// Sessions that hit the event on the screen: rate × sessions. Ranks by how
-// many people a fix would reach, not by the rate alone.
-const affectedRows = computed<BarRow[]>(() => screens.value
-  .filter(s => s.metric_group === friction.group.value && s.sessions && s.sessions_with_pct !== null)
-  .map(s => ({ ...s, affected: Math.round((s.sessions! * s.sessions_with_pct!) / 100) }))
-  .sort((a, b) => b.affected - a.affected)
-  .slice(0, 8)
-  .map(s => ({
-    key: s.screen,
-    label: s.screen,
-    values: [s.affected],
-    notes: [`${formatValue(s.sessions_with_pct, 'pct')} das ${formatValue(s.sessions, 'int')} sessões da tela`]
-  })))
-
-const affectedColumns: TableColumn<BarRow>[] = [
-  { accessorKey: 'label', header: 'Tela' },
-  { id: 'affected', header: 'Sessões com o evento', cell: ({ row }) => formatValue(row.original.values[0] ?? null, 'int') },
-  { id: 'notes', header: 'Taxa', cell: ({ row }) => (row.original.notes ?? []).join(' · ') }
-]
-
-/* ---------- onde as sessões acontecem ---------- */
-
-const trafficRows = computed<BarRow[]>(() => [...engagement.value]
-  .filter(e => e.sessions)
-  .sort((a, b) => (b.sessions ?? 0) - (a.sessions ?? 0))
-  .slice(0, 10)
-  .map(e => ({
-    key: e.screen,
-    label: e.screen,
-    values: [e.sessions],
-    notes: [`Tempo ativo médio: ${formatValue(e.active_time_avg_seconds, 'seconds')}`,
-      `Páginas por sessão: ${formatValue(e.pages_per_session, 'decimal')}`]
-  })))
-
-const trafficColumns: TableColumn<BarRow>[] = [
-  { accessorKey: 'label', header: 'Tela' },
-  { id: 'sessions', header: 'Sessões', cell: ({ row }) => formatValue(row.original.values[0] ?? null, 'int') },
-  { id: 'notes', header: 'Engajamento', cell: ({ row }) => (row.original.notes ?? []).join(' · ') }
-]
-
-/* ---------- desktop × mobile ---------- */
-
-const deviceSessions = computed(() => {
-  const by: Record<string, number> = {}
-  for (const d of devices.value) by[d.device] = Math.max(by[d.device] ?? 0, d.sessions ?? 0)
-  return by
+// Every area with visits (Clarity) or with requests or defects (ENSPACE).
+// The rate only from MIN_VISITS on, as in the chart.
+interface AreaRow {
+  key: string
+  label: string
+  visits: number | null
+  requests: number
+  rate: number | null
+  defects: number
+  defects_open: number
+  score: number
+}
+const areaRows = computed<AreaRow[]>(() => {
+  const areas = qualityFetch.data.value?.areas ?? []
+  const keys = new Set<string | null>([...areas.map(a => a.area_key), ...quality.usageByArea.value.keys()])
+  return [...keys].map((key) => {
+    const a = areas.find(x => x.area_key === key)
+    const visits = quality.usageByArea.value.get(key)?.visits || null
+    const requests = a?.requests ?? 0
+    return {
+      key: key ?? 'sem-area',
+      label: quality.areaLabel(key),
+      visits,
+      requests,
+      rate: key && visits && visits >= MIN_VISITS ? (1000 * requests) / visits : null,
+      defects: a?.defects ?? 0,
+      defects_open: a?.defects_open ?? 0,
+      score: a?.score ?? 0
+    }
+  }).sort((x, y) => Number(x.key === 'sem-area') - Number(y.key === 'sem-area')
+    || y.score - x.score || y.requests - x.requests || (y.visits ?? 0) - (x.visits ?? 0))
 })
-const deviceShare = computed(() => {
-  const total = Object.values(deviceSessions.value).reduce((a, b) => a + b, 0)
-  const share = (device: string) => (total ? (100 * (deviceSessions.value[device] ?? 0)) / total : null)
-  return { desktop: share('PC'), mobile: share('Mobile') }
-})
-const deviceSeries: BarSeries[] = [
-  { name: 'Desktop', color: 'var(--viz-series-1)' },
-  { name: 'Mobile', color: 'var(--viz-series-2)' }
-]
-const deviceRows = computed<BarRow[]>(() => FRICTION_GROUPS.map((group) => {
-  const pick = (device: string) => devices.value.find(d => d.metric_group === group.key && d.device === device)
-  return {
-    key: group.key,
-    label: group.label,
-    values: [pick('PC')?.sessions_with_pct ?? null, pick('Mobile')?.sessions_with_pct ?? null],
-    notes: [`Desktop: ${formatValue(pick('PC')?.sessions ?? null, 'int')} sessões · Mobile: ${formatValue(pick('Mobile')?.sessions ?? null, 'int')}`]
-  }
-}))
-const deviceColumns: TableColumn<BarRow>[] = [
-  { accessorKey: 'label', header: 'Atrito' },
-  { id: 'pc', header: 'Desktop', cell: ({ row }) => formatValue(row.original.values[0] ?? null, 'pct') },
-  { id: 'mobile', header: 'Mobile', cell: ({ row }) => formatValue(row.original.values[1] ?? null, 'pct') }
-]
-
-/* ---------- onde olhar primeiro ---------- */
-
-interface WorstRow { group: string, screen: string, pct: number | null, sessions: number | null, affected: number | null }
-const worst = computed<WorstRow[]>(() => FRICTION_GROUPS.map((group) => {
-  const top = screens.value
-    .filter(s => s.metric_group === group.key && (s.sessions ?? 0) >= 30 && s.sessions_with_pct !== null)
-    .sort((a, b) => b.sessions_with_pct! - a.sessions_with_pct!)[0]
-  return {
-    group: group.label,
-    screen: top?.screen ?? 'Nenhuma tela com 30+ sessões',
-    pct: top?.sessions_with_pct ?? null,
-    sessions: top?.sessions ?? null,
-    affected: top ? Math.round((top.sessions! * top.sessions_with_pct!) / 100) : null
-  }
-}))
-const worstColumns: TableColumn<WorstRow>[] = [
-  { accessorKey: 'group', header: 'Atrito' },
-  { accessorKey: 'screen', header: 'Pior tela' },
-  { accessorKey: 'pct', header: '% sessões', cell: ({ row }) => formatValue(row.original.pct, 'pct') },
-  { accessorKey: 'sessions', header: 'Sessões', cell: ({ row }) => formatValue(row.original.sessions, 'int') },
-  { accessorKey: 'affected', header: 'Sessões com o evento', cell: ({ row }) => formatValue(row.original.affected, 'int') }
+const areaColumns: TableColumn<AreaRow>[] = [
+  { accessorKey: 'label', header: 'Área' },
+  { accessorKey: 'visits', header: 'Visitas de tela', cell: ({ row }) => formatValue(row.original.visits, 'int') },
+  { accessorKey: 'requests', header: 'Chamados', cell: ({ row }) => formatValue(row.original.requests, 'int') },
+  { accessorKey: 'rate', header: 'Chamados / mil visitas', cell: ({ row }) => formatValue(row.original.rate, 'decimal') },
+  { accessorKey: 'defects', header: 'Defeitos', cell: ({ row }) => formatValue(row.original.defects, 'int') },
+  { accessorKey: 'defects_open', header: 'Abertos', cell: ({ row }) => formatValue(row.original.defects_open, 'int') },
+  { accessorKey: 'score', header: 'Score', cell: ({ row }) => formatValue(row.original.score, 'int') }
 ]
 </script>
 
@@ -174,83 +75,102 @@ const worstColumns: TableColumn<WorstRow>[] = [
         <template #leading><UDashboardSidebarCollapse /></template>
         <template #right>
           <CoverageBadge v-if="current" :collected="current.days_collected" :total="current.days_in_period" />
+          <UBadge v-if="quality.kpis.value?.loaded_at" color="neutral" variant="subtle" icon="i-lucide-database" class="hidden md:inline-flex">
+            ENSPACE lido em {{ formatDateTime(quality.kpis.value.loaded_at) }}
+          </UBadge>
         </template>
       </UDashboardNavbar>
-      <PageFilters compare-toggle>
-        <USelect v-model="friction.group.value" :items="friction.items" class="w-48" aria-label="Tipo de atrito" />
-      </PageFilters>
+      <PageFilters compare-toggle />
     </template>
 
     <template #body>
+      <p v-if="period.compare.value && usageFetch.data.value" class="text-sm text-muted">
+        <template v-if="usage.previous.value">Comparando com {{ formatPeriod(usageFetch.data.value.previousPeriod.from, usageFetch.data.value.previousPeriod.to) }}.</template>
+        <template v-else>Sem dados do Clarity de {{ formatPeriod(usageFetch.data.value.previousPeriod.from, usageFetch.data.value.previousPeriod.to) }} para comparar.</template>
+      </p>
+
+      <!-- Clarity -->
+      <SourceHeading title="Uso do produto" source="Clarity" :to="target(PAGES.uso)" link-label="Visão geral do uso" />
       <UAlert
-        v-if="error"
+        v-if="errorOf(usageFetch)"
         color="error" variant="subtle" icon="i-lucide-circle-x"
-        title="Não foi possível ler os dados" :description="error.statusMessage || error.message"
+        title="Não foi possível ler o Clarity" :description="errorOf(usageFetch) ?? undefined"
       />
-      <template v-else-if="status === 'pending' && !data">
-        <USkeleton class="h-36" />
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <USkeleton v-for="n in 4" :key="n" class="h-72" />
-        </div>
-      </template>
-      <template v-else-if="data">
-        <p v-if="period.compare.value" class="text-sm text-muted">
-          <template v-if="previous">Comparando com {{ formatPeriod(data.previousPeriod.from, data.previousPeriod.to) }}.</template>
-          <template v-else>Sem dados de {{ formatPeriod(data.previousPeriod.from, data.previousPeriod.to) }} para comparar.</template>
-        </p>
+      <USkeleton v-else-if="loadingOf(usageFetch)" class="h-36 shrink-0" />
+      <PageStats v-else :stats="usage.stats.value" />
 
-        <PageStats :stats="stats" />
-
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <VizChartCard
-            title="Atrito no período"
-            :description="previous
-              ? 'Percentual das sessões com cada evento, contra o período anterior de mesmo tamanho. Quanto menor, melhor.'
-              : 'Percentual das sessões com cada evento. Quanto menor, melhor.'"
-            :legend="frictionSeries.length > 1 ? frictionSeries.map(s => ({ label: s.name, color: s.color })) : undefined"
-            :columns="frictionColumns" :rows="frictionRows"
-          >
-            <VizUnovisBars :rows="frictionRows" :series="frictionSeries" format="pct" :label-width="140" />
-          </VizChartCard>
-
-          <VizChartCard
-            :title="`Onde o atrito pesa mais · ${friction.label.value}`"
-            description="Sessões que tiveram o evento em cada tela: taxa × sessões. É onde uma correção alcança mais gente."
-            :columns="affectedColumns" :rows="affectedRows"
-            :loading="loadingOf(screensFetch)" :error="errorOf(screensFetch)"
-            :empty="!affectedRows.length"
-          >
-            <VizUnovisBars :rows="affectedRows" :series="[{ name: 'Sessões com o evento', color: 'var(--viz-series-1)' }]" format="int" />
-          </VizChartCard>
-
-          <VizChartCard
-            title="Onde as sessões acontecem"
-            description="As 10 telas com mais sessões. A sessão conta uma vez por URL da tela: quem abre duas tarefas conta duas vezes."
-            :columns="trafficColumns" :rows="trafficRows"
-            :loading="loadingOf(engagementFetch)" :error="errorOf(engagementFetch)"
-            :empty="!trafficRows.length"
-          >
-            <VizUnovisBars :rows="trafficRows" :series="[{ name: 'Sessões', color: 'var(--viz-series-1)' }]" format="int" />
-          </VizChartCard>
-
-          <VizChartCard
-            title="Desktop × Mobile"
-            :description="`Percentual das sessões com cada evento, por dispositivo. Desktop tem ${formatValue(deviceShare.desktop, 'pct')} das sessões e mobile ${formatValue(deviceShare.mobile, 'pct')}: no mobile, poucas sessões mexem muito na taxa.`"
-            :legend="deviceSeries.map(s => ({ label: s.name, color: s.color }))"
-            :columns="deviceColumns" :rows="deviceRows"
-            :loading="loadingOf(devicesFetch)" :error="errorOf(devicesFetch)"
-            :empty="!devices.length"
-          >
-            <VizUnovisBars :rows="deviceRows" :series="deviceSeries" format="pct" :label-width="140" />
-          </VizChartCard>
-        </div>
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <VizChartCard
+          title="Atrito no período"
+          :description="frictionDescription"
+          :legend="frictionSeries.length > 1 ? frictionSeries.map(s => ({ label: s.name, color: s.color })) : undefined"
+          :columns="frictionColumns" :rows="frictionRows"
+          :loading="loadingOf(usageFetch)" :error="errorOf(usageFetch)"
+        >
+          <VizUnovisBars :rows="frictionRows" :series="frictionSeries" format="pct" :label-width="140" />
+        </VizChartCard>
 
         <VizChartCard
-          title="Onde olhar primeiro"
-          description="Para cada tipo de atrito, a tela com a maior taxa entre as que tiveram 30 sessões ou mais no período."
-          :loading="loadingOf(screensFetch)" :error="errorOf(screensFetch)"
+          title="Onde o produto é usado"
+          :description="usageDescription"
+          :columns="usageColumns" :rows="usageRows"
+          :loading="loadingOf(qualityFetch)" :error="errorOf(qualityFetch)"
+          :empty="!usageRows.length" empty-text="Sem visitas do Clarity no período."
         >
-          <UTable :data="worst" :columns="worstColumns" class="tabular" />
+          <VizUnovisBars :rows="usageRows" :series="[{ name: 'Visitas de tela', color: 'var(--viz-series-1)' }]" format="int" />
+        </VizChartCard>
+      </div>
+
+      <!-- ENSPACE -->
+      <SourceHeading title="Qualidade do produto" source="ENSPACE" :to="target(PAGES.qualidade)" link-label="Riscos por área" />
+      <UAlert
+        v-if="errorOf(qualityFetch)"
+        color="error" variant="subtle" icon="i-lucide-circle-x"
+        title="Não foi possível ler o ENSPACE" :description="errorOf(qualityFetch) ?? undefined"
+      />
+      <USkeleton v-else-if="loadingOf(qualityFetch)" class="h-36 shrink-0" />
+      <UCard v-else-if="!loaded" class="shrink-0">
+        <UEmpty
+          icon="i-lucide-database-zap"
+          title="Chamados e demandas ainda não foram carregados"
+          description="Os números do workspace produtos do ENSPACE aparecem aqui quando houver itens nele."
+          variant="naked"
+        />
+      </UCard>
+      <template v-else>
+        <PageStats :stats="quality.stats.value" />
+
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <VizChartCard
+            title="Risco por área"
+            :description="riskDescription"
+            :legend="prioritySeries.map(s => ({ label: s.name, color: s.color }))"
+            :columns="riskColumns" :rows="riskRows"
+            :empty="!riskRows.length" empty-text="Nenhum defeito criado no período."
+          >
+            <VizUnovisBars :rows="riskRows" :series="prioritySeries" format="int" stacked />
+          </VizChartCard>
+
+          <VizChartCard
+            title="Chamados por mil visitas"
+            :description="rateDescription"
+            :columns="rateColumns" :rows="rateRows"
+            :empty="!rateRows.length" :empty-text="`Nenhuma área com chamados e ${MIN_VISITS}+ visitas no período.`"
+          >
+            <VizUnovisBars :rows="rateRows" :series="[{ name: 'Chamados por mil visitas', color: 'var(--viz-series-1)' }]" format="decimal" />
+            <p v-if="rateLeftOut.length" class="text-xs text-muted mt-3">
+              Fora do gráfico. {{ rateLeftOut.join(' ') }}
+            </p>
+          </VizChartCard>
+        </div>
+
+        <!-- Where they meet -->
+        <SourceHeading title="Áreas do sistema" source="Clarity × ENSPACE" />
+        <VizChartCard
+          title="Uso e qualidade por área"
+          :description="`Visitas do Clarity ao lado de chamados e defeitos do ENSPACE, nunca somados. Chamados por mil visitas só a partir de ${MIN_VISITS} visitas.`"
+        >
+          <UTable :data="areaRows" :columns="areaColumns" class="tabular" />
         </VizChartCard>
       </template>
     </template>

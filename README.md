@@ -10,16 +10,20 @@ Peça a senha a quem administra o painel.
 
 ## O que tem
 
-| Página | Pergunta |
-|---|---|
-| Panorama | Como foi o período, comparado com o anterior, e onde o atrito pesa mais |
-| Atrito por tela | Em que tela as pessoas tropeçam (cliques mortos, retornos rápidos, erros) |
-| Desktop × Mobile | Qual a pior versão de cada tela |
-| Audiência | Dispositivos, países, navegadores, sistemas e origens de acesso |
-| Segmentos e funis | Leituras feitas na tela do Clarity (segmentos, funis, eventos) |
-| Riscos por área | Onde estão os defeitos e os chamados, por área do sistema, e quanto cada área é usada |
-| Chamados | Quem abre chamados, de que tipo, por qual origem e com que desfecho |
-| Saúde dos dados | Dias que faltam, coletas fora de hora e o que revisar |
+O menu lateral é dividido pela origem dos dados. O Panorama junta as duas
+fontes; cada fonte tem a sua seção, com submenus.
+
+| Seção | Página | Pergunta |
+|---|---|---|
+| — | Panorama | Como foi o período no uso (Clarity) e na qualidade (ENSPACE), e onde os dois se encontram: chamados por mil visitas de cada área do sistema |
+| Clarity › Uso | Visão geral | Sessões, atrito no período, telas mais usadas e onde olhar primeiro |
+| Clarity › Uso | Audiência | Dispositivos, países, navegadores, sistemas e origens de acesso |
+| Clarity › Uso | Segmentos e funis | Leituras feitas na tela do Clarity (segmentos, funis, eventos) |
+| Clarity › Atrito | Por tela | Em que tela as pessoas tropeçam (cliques mortos, retornos rápidos, erros) |
+| Clarity › Atrito | Desktop × Mobile | Qual a pior versão de cada tela |
+| ENSPACE › Qualidade | Riscos por área | Onde estão os defeitos e os chamados, por área do sistema |
+| ENSPACE › Qualidade | Chamados | Quem abre chamados, de que tipo, por qual origem e com que desfecho |
+| Painel | Saúde dos dados | Dias que faltam, coletas fora de hora e o que revisar |
 
 Taxas e médias são ponderadas por sessão. Usuários nunca são somados entre dias.
 
@@ -30,9 +34,9 @@ a opção de ver a tabela.
 
 A estrutura segue o [template de dashboard do Nuxt UI](https://github.com/nuxt-ui-templates/dashboard):
 menu lateral recolhível, busca com `Ctrl K` (páginas, período, aparência),
-atalhos `g` + letra para trocar de página (`g p` Panorama, `g q` Riscos por
-área, `g c` Chamados...), seletor de período com calendário e menu de tema e
-aparência. A única peça do template que fica de fora é o gráfico de linha por
+atalhos `g` + letra para trocar de página (`g p` Panorama, `g u` Visão geral
+do uso, `g q` Riscos por área, `g c` Chamados...), seletor de período com
+calendário e menu de tema e aparência. A única peça do template que fica de fora é o gráfico de linha por
 dia, pela regra acima.
 
 ## Como funciona

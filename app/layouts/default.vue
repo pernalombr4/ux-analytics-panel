@@ -1,23 +1,27 @@
 <script setup lang="ts">
 // The shell of the Nuxt UI dashboard template: sidebar with the app menu on
-// top, page groups, the access menu at the bottom, and a search (Cmd+K) that
-// also runs the period and appearance commands.
-const { links, open, go } = useNavigation()
+// top, the pages by source (Panorama, Clarity, ENSPACE; see useNavigation),
+// the access menu at the bottom, and a search (Cmd+K) that also runs the
+// period and appearance commands.
+const { links, footerLinks, open, go } = useNavigation()
 const period = usePeriod()
 const colorMode = useColorMode()
 const { set: setChave } = usePainelChave()
 usePageShortcuts()
 
-const groups = computed(() => [{
-  id: 'paginas',
-  label: 'Ir para',
-  items: Object.values(PAGES).map(page => ({
+// Pages by section, as in the sidebar.
+const pageGroups = [...SECTIONS, FOOTER_SECTION].map(section => ({
+  id: `paginas-${section.search}`,
+  label: section.search,
+  items: sectionPages(section).map(page => ({
     label: page.label,
     icon: page.icon,
     kbds: ['g', page.key],
     onSelect: () => go(page)
   }))
-}, {
+}))
+
+const groups = computed(() => [...pageGroups, {
   id: 'periodo',
   label: 'Período',
   items: [
@@ -67,7 +71,7 @@ const groups = computed(() => [{
 
         <UNavigationMenu
           :collapsed="collapsed"
-          :items="links[0]"
+          :items="links"
           orientation="vertical"
           tooltip
           popover
@@ -75,7 +79,7 @@ const groups = computed(() => [{
 
         <UNavigationMenu
           :collapsed="collapsed"
-          :items="links[1]"
+          :items="footerLinks"
           orientation="vertical"
           tooltip
           class="mt-auto"
