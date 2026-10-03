@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
+import type { PageStat } from '~/components/PageStats.vue'
 
 // Panorama: the period at a glance, laid out like the home page of the Nuxt UI
 // dashboard template (stat cards, chart cards, a table). Product rule: no line
@@ -37,21 +38,11 @@ const STATS = [
   { key: 'time_active_avg_seconds', label: 'Tempo ativo médio', icon: 'i-lucide-timer', format: 'seconds', direction: 'neutral', note: 'Por sessão, só o tempo com interação.' }
 ] as const
 
-const stats = computed(() => STATS.map((stat) => {
-  const value = (current.value?.[stat.key] ?? null) as number | null
-  const before = (previous.value?.[stat.key] ?? null) as number | null
-  let badge: { text: string, color: 'success' | 'error' | 'neutral', icon: string } | null = null
-  if (value !== null && before !== null && before !== 0) {
-    const change = ((value - before) / before) * 100
-    const good = stat.direction === 'neutral' || Math.abs(change) < 1e-9 ? null : (change > 0) === (stat.direction === 'higher')
-    badge = {
-      text: `${change > 0 ? '+' : ''}${formatValue(change, 'decimal')}%${good === null ? '' : good ? ' · melhor' : ' · pior'}`,
-      color: good === null ? 'neutral' : good ? 'success' : 'error',
-      icon: change > 0 ? 'i-lucide-arrow-up-right' : change < 0 ? 'i-lucide-arrow-down-right' : 'i-lucide-minus'
-    }
-  }
-  return { ...stat, value, badge }
-}))
+const stats = computed<PageStat[]>(() => STATS.map(stat => ({
+  ...stat,
+  value: (current.value?.[stat.key] ?? null) as number | null,
+  previous: (previous.value?.[stat.key] ?? null) as number | null
+})))
 
 /* ---------- atrito: período atual × anterior ---------- */
 
@@ -208,29 +199,7 @@ const worstColumns: TableColumn<WorstRow>[] = [
           <template v-else>Sem dados de {{ formatPeriod(data.previousPeriod.from, data.previousPeriod.to) }} para comparar.</template>
         </p>
 
-        <UPageGrid class="lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-px">
-          <UPageCard
-            v-for="stat in stats" :key="stat.key"
-            :icon="stat.icon"
-            :title="stat.label"
-            variant="subtle"
-            :ui="{
-              container: 'gap-y-1.5',
-              wrapper: 'items-start',
-              leading: 'p-2.5 rounded-full bg-primary/10 ring ring-inset ring-primary/25 flex-col',
-              title: 'font-normal text-muted text-xs uppercase'
-            }"
-            class="lg:rounded-none first:rounded-l-lg last:rounded-r-lg hover:z-1"
-          >
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="text-2xl font-semibold text-highlighted">{{ formatValue(stat.value, stat.format) }}</span>
-              <UBadge v-if="stat.badge" :color="stat.badge.color" variant="subtle" :icon="stat.badge.icon" class="text-xs">
-                {{ stat.badge.text }}
-              </UBadge>
-            </div>
-            <p class="text-xs text-muted">{{ stat.note }}</p>
-          </UPageCard>
-        </UPageGrid>
+        <PageStats :stats="stats" />
 
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
           <VizChartCard

@@ -1,9 +1,10 @@
 <script setup lang="ts">
 // Horizontal bars drawn with Unovis, the charting library of the Nuxt UI
-// dashboard template. One row per category, one bar per series. Values are
-// period aggregates: this component never draws a time axis.
-import { VisAxis, VisGroupedBar, VisTooltip, VisXYContainer } from '@unovis/vue'
-import { GroupedBar } from '@unovis/ts'
+// dashboard template. One row per category; one bar per series side by side,
+// or the series stacked into one bar (parts of a whole: priority mix, type
+// mix). Values are period aggregates: this component never draws a time axis.
+import { VisAxis, VisGroupedBar, VisStackedBar, VisTooltip, VisXYContainer } from '@unovis/vue'
+import { GroupedBar, StackedBar } from '@unovis/ts'
 
 const props = withDefaults(defineProps<{
   rows: BarRow[]
@@ -13,7 +14,9 @@ const props = withDefaults(defineProps<{
   max?: number
   /** Width reserved for the category labels, in px. */
   labelWidth?: number
-}>(), { labelWidth: 170 })
+  /** Stack the series into one bar per row instead of placing them side by side. */
+  stacked?: boolean
+}>(), { labelWidth: 170, stacked: false })
 
 // On a phone a fixed label column would leave the bars a sliver: cap it at
 // 40% of the card.
@@ -36,7 +39,9 @@ const colors = computed(() => props.series.map(s => s.color))
 // gridline names a real value. Explicit ticks also keep Unovis from drawing a
 // second, denser set of gridlines between the labels.
 const valueTicks = computed(() => {
-  const top = props.max ?? Math.max(1e-9, ...props.rows.flatMap(r => r.values.map(v => v ?? 0)))
+  const top = props.max ?? Math.max(1e-9, ...props.rows.flatMap(r => props.stacked
+    ? [r.values.reduce<number>((sum, v) => sum + (v ?? 0), 0)]
+    : r.values.map(v => v ?? 0)))
   const magnitude = 10 ** Math.floor(Math.log10(top))
   const step = [0.1, 0.2, 0.25, 0.5, 1, 2, 2.5, 5, 10].map(m => m * magnitude).find(s => top / s <= 5) ?? magnitude * 10
   const end = props.max ?? Math.ceil(top / step) * step
@@ -44,7 +49,7 @@ const valueTicks = computed(() => {
 })
 const domainMax = computed(() => valueTicks.value[valueTicks.value.length - 1]!)
 
-const rowHeight = computed(() => (props.series.length > 1 ? 46 : 30))
+const rowHeight = computed(() => (props.series.length > 1 && !props.stacked ? 46 : 30))
 const height = computed(() => Math.max(96, props.rows.length * rowHeight.value + 40))
 
 const categoryLabel = (i: number) => {
@@ -60,14 +65,16 @@ const valueLabel = (v: number) => props.format === 'pct'
 const escapeHtml = (text: string) => text.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }[c]!))
 
 function tooltip(d: BarRow): string {
-  const lines = props.series.map((s, k) =>
+  const lines = props.series.map((s, k) => ({ s, k })).filter(({ k }) => !props.stacked || (d.values[k] ?? 0) > 0).map(({ s, k }) =>
     `<div class="flex items-center gap-2"><span class="size-2.5 rounded-full shrink-0" style="background:${s.color}"></span>`
     + `<span class="text-muted">${escapeHtml(s.name)}</span><span class="ms-auto ps-3 font-medium text-highlighted tabular">${escapeHtml(formatValue(d.values[k], props.format))}</span></div>`)
   const notes = (d.notes ?? []).map(n => `<div class="text-muted">${escapeHtml(n)}</div>`)
   return `<div class="flex flex-col gap-1 text-xs max-w-72"><div class="font-semibold text-highlighted">${escapeHtml(d.label)}</div>${lines.join('')}${notes.join('')}</div>`
 }
 
-const triggers = { [GroupedBar.selectors.barGroup]: tooltip }
+const triggers = computed(() => (props.stacked
+  ? { [StackedBar.selectors.bar]: tooltip }
+  : { [GroupedBar.selectors.barGroup]: tooltip }))
 </script>
 
 <template>
@@ -83,7 +90,18 @@ const triggers = { [GroupedBar.selectors.barGroup]: tooltip }
       :margin="{ left: labelColumn, right: 28, bottom: 28 }"
       :auto-margin="false"
     >
+      <VisStackedBar
+        v-if="stacked"
+        :x="indexOf"
+        :y="accessors"
+        :color="colors"
+        orientation="horizontal"
+        :rounded-corners="4"
+        :bar-padding="0.36"
+        :bar-min-height="2"
+      />
       <VisGroupedBar
+        v-else
         :x="indexOf"
         :y="accessors"
         :color="colors"

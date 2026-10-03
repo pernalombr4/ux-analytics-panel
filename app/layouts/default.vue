@@ -14,6 +14,8 @@ const links = computed<NavigationMenuItem[]>(() => [
   { label: 'Desktop × Mobile', icon: 'i-lucide-smartphone', to: withPeriod('/dispositivos') },
   { label: 'Audiência', icon: 'i-lucide-users', to: withPeriod('/audiencia') },
   { label: 'Segmentos e funis', icon: 'i-lucide-filter', to: '/profundas' },
+  { label: 'Qualidade do produto', icon: 'i-lucide-shield-check', to: withPeriod('/qualidade') },
+  { label: 'Chamados', icon: 'i-lucide-headset', to: withPeriod('/chamados') },
   { label: 'Saúde dos dados', icon: 'i-lucide-heart-pulse', to: '/saude' }
 ])
 </script>
@@ -40,7 +42,7 @@ const links = computed<NavigationMenuItem[]>(() => [
 
       <template #footer="{ collapsed }">
         <div class="flex items-center justify-between w-full gap-2">
-          <span v-if="!collapsed" class="text-xs text-muted">Dados: Microsoft Clarity</span>
+          <span v-if="!collapsed" class="text-xs text-muted">Dados: Clarity e ENSPACE</span>
           <div class="flex items-center gap-1">
             <UColorModeButton />
             <UTooltip text="Sair e esquecer a senha neste navegador">

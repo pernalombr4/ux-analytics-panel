@@ -24,6 +24,13 @@
   --viz-seq-5: #256abf;
   --viz-seq-6: #184f95;
   --viz-seq-7: #0d366b;
+  /* priority, an ordered list: one hue, the most severe has the most
+     contrast against the surface (darkest here, lightest in dark mode) */
+  --viz-sev-5: #0d366b;
+  --viz-sev-4: #256abf;
+  --viz-sev-3: #3987e5;
+  --viz-sev-2: #6da7ec;
+  --viz-sev-1: #9ec5f4;
   /* diverging: better than baseline / worse than baseline, gray midpoint */
   --viz-better: #2a78d6;
   --viz-worse: #e34948;
@@ -45,6 +52,11 @@
   --viz-worse: #e66767;
   --viz-mid: #383835;
   --viz-good-text: #0ca30c;
+  --viz-sev-5: #cde2fb;
+  --viz-sev-4: #9ec5f4;
+  --viz-sev-3: #6da7ec;
+  --viz-sev-2: #3987e5;
+  --viz-sev-1: #256abf;
 }
 
 .tabular {

@@ -48,3 +48,14 @@ export function formatPeriod(from: string, to: string): string {
   const sameYear = from.slice(0, 4) === to.slice(0, 4)
   return `${formatDay(from, !sameYear)} – ${formatDay(to)}`
 }
+
+/** "2026-10-03T13:06:42Z" -> "03/10 às 10:06", in Sao Paulo time. */
+export function formatDateTime(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return iso
+  const parts = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+  }).formatToParts(date)
+  const get = (type: string) => parts.find(p => p.type === type)?.value ?? ''
+  return `${get('day')}/${get('month')} às ${get('hour')}:${get('minute')}`
+}

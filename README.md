@@ -1,6 +1,7 @@
 # UX Analytics · ENSPACE
 
-Painel de UX do ENSPACE com os dados do Microsoft Clarity, coletados todo dia.
+Painel de UX e qualidade do ENSPACE: o uso do produto (Microsoft Clarity,
+coletado todo dia) e os chamados e demandas do workspace `produtos` do ENSPACE.
 
 **https://pernalombr4.github.io/ux-analytics-panel/**
 
@@ -16,6 +17,8 @@ Peça a senha a quem administra o painel.
 | Desktop × Mobile | Qual a pior versão de cada tela |
 | Audiência | Dispositivos, países, navegadores, sistemas e origens de acesso |
 | Segmentos e funis | Leituras feitas na tela do Clarity (segmentos, funis, eventos) |
+| Qualidade do produto | Onde estão os defeitos e os chamados, por área do sistema, e quanto cada área é usada |
+| Chamados | Quem abre chamados, de que tipo, por qual origem e com que desfecho |
 | Saúde dos dados | Dias que faltam, coletas fora de hora e o que revisar |
 
 Taxas e médias são ponderadas por sessão. Usuários nunca são somados entre dias.

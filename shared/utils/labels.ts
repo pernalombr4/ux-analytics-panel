@@ -68,3 +68,19 @@ export const METRIC_LABELS: Record<string, string> = {
 export function metricLabel(name: string): string {
   return METRIC_LABELS[name] ?? name
 }
+
+/** Request types of the Chamados category, in three groups for charts. */
+export const REQUEST_TYPE_GROUPS = [
+  { key: 'bug', label: 'Bug', types: ['bug'], color: 'var(--viz-series-2)' },
+  { key: 'evolucao', label: 'Melhoria ou funcionalidade', types: ['melhoria', 'nova_funcionalidade', 'solicitacao_automacao'], color: 'var(--viz-series-1)' },
+  { key: 'uso', label: 'Dúvida, uso ou outro', types: ['duvida_ou_apoio', 'erro_uso', 'outro'], color: 'var(--viz-other)' }
+] as const
+
+export function requestTypeGroup(type: string | null): typeof REQUEST_TYPE_GROUPS[number]['key'] {
+  return REQUEST_TYPE_GROUPS.find(g => (g.types as readonly string[]).includes(type ?? ''))?.key ?? 'uso'
+}
+
+/** ENSPACE labels carry examples in parentheses; charts show the name only. */
+export function shortLabel(label: string): string {
+  return label.replace(/\s*\([^)]*\)\s*$/, '').trim() || label
+}

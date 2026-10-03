@@ -5,6 +5,7 @@
 export type PainelResource =
   | 'ping' | 'kpis' | 'telas' | 'engajamento' | 'urls'
   | 'dispositivos' | 'tecnologia' | 'audiencia' | 'profundas' | 'saude'
+  | 'qualidade' | 'chamados'
 
 export interface PainelParams {
   from?: string
