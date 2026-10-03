@@ -50,3 +50,13 @@
 .tabular {
   font-variant-numeric: tabular-nums;
 }
+
+/*
+ * The dashboard panel body is a flex column that scrolls. Blocks inside it
+ * (cards, alerts, tile rows) keep their own height and the body scrolls;
+ * without this, anything with hidden overflow shrinks to fit the screen and
+ * its content is cut.
+ */
+[data-slot="root"] > [data-slot="body"] > * {
+  flex-shrink: 0;
+}

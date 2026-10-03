@@ -49,7 +49,7 @@ export const METRIC_LABELS: Record<string, string> = {
   conversion_rate: 'Conversão',
   converted_sessions: 'Sessões convertidas',
   time_to_convert_median: 'Tempo até converter (mediana)',
-  step_reached_pct: 'Chegaram ao passo',
+  step_reached_pct: 'Conversão do passo anterior',
   performance_score: 'Nota de desempenho',
   lcp: 'LCP',
   inp: 'INP',

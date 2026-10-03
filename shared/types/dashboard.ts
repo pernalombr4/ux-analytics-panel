@@ -163,9 +163,19 @@ export interface CollectionCall {
   is_canonical: boolean
 }
 
+/** A data_quality item already looked at, with what was decided. */
+export interface ReviewedRow {
+  check_name: string
+  severity: 'erro' | 'revisar'
+  ref: string
+  decision: string
+  reviewed_at: string
+}
+
 export interface HealthResponse {
   coverage: CoverageRow[]
   quality: QualityRow[]
+  reviewed: ReviewedRow[]
   offHours: CollectionCall[]
   queued: number
 }

@@ -34,6 +34,13 @@ const qualityColumns: TableColumn<QualityRow>[] = [
   { accessorKey: 'detail', header: 'O que fazer' }
 ]
 
+const reviewedColumns: TableColumn<ReviewedRow>[] = [
+  { accessorKey: 'check_name', header: 'Problema' },
+  { accessorKey: 'ref', header: 'Onde' },
+  { accessorKey: 'decision', header: 'Decisão', meta: { class: { td: 'whitespace-normal min-w-80' } } },
+  { accessorKey: 'reviewed_at', header: 'Revisado em', cell: ({ row }) => formatDay(row.original.reviewed_at.slice(0, 10)) }
+]
+
 const callColumns: TableColumn<CollectionCall>[] = [
   { accessorKey: 'metric_date', header: 'Dia', cell: ({ row }) => formatDay(row.original.metric_date) },
   { accessorKey: 'breakdown_type', header: 'Recorte', cell: ({ row }) => TYPE_LABELS[row.original.breakdown_type] ?? row.original.breakdown_type },
@@ -73,6 +80,14 @@ const callColumns: TableColumn<CollectionCall>[] = [
 
         <VizChartCard title="Qualidade" description="O que precisa de revisão antes de confiar num número." :empty="!data.quality.length" empty-text="Nada a revisar.">
           <UTable :data="data.quality" :columns="qualityColumns" />
+        </VizChartCard>
+
+        <VizChartCard
+          v-if="data.reviewed?.length"
+          title="Já revisados"
+          description="Problemas que não têm conserto e já foram analisados. Saem da lista acima, mas o dado continua marcado aqui."
+        >
+          <UTable :data="data.reviewed" :columns="reviewedColumns" />
         </VizChartCard>
 
         <VizChartCard title="Cobertura por dia" description="Cada dia precisa dos sete recortes. Um dia perdido não volta: a API do Clarity só devolve as últimas 24 a 72 horas." :empty="!days.length">

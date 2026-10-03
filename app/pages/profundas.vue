@@ -60,20 +60,35 @@ const segments = computed<DivergingRow[]>(() => rows.value
 
 const segmentFormat = computed(() => formatForUnit(rows.value.find(r => r.metric_name === segmentMetric.value)?.unit_base ?? 'pct'))
 
-interface Funnel { lens: string, label: string, conversion: number | null, median: number | null, steps: RankingRow[] }
+// step_reached_pct is the conversion from the PREVIOUS step (the product of the
+// steps equals the funnel conversion). The bars show how much of the first
+// step got this far, which needs the steps in order: numbered "01 - Name".
+interface Funnel { lens: string, label: string, conversion: number | null, median: number | null, ordered: boolean, steps: RankingRow[] }
 const funnels = computed<Funnel[]>(() => {
-  const byLens = new Map<string, Funnel>()
+  const byLens = new Map<string, Funnel & { raw: DeepMetric[] }>()
   for (const r of rows.value.filter(r => r.lens_type === 'funnel')) {
-    const funnel = byLens.get(r.lens_name) ?? { lens: r.lens_name, label: r.clarity_label || r.lens_name, conversion: null, median: null, steps: [] }
+    const funnel = byLens.get(r.lens_name) ?? { lens: r.lens_name, label: r.clarity_label || r.lens_name, conversion: null, median: null, ordered: true, steps: [], raw: [] }
     if (r.metric_name === 'conversion_rate') funnel.conversion = r.value_base
     if (r.metric_name === 'time_to_convert_median') funnel.median = r.value_base
-    if (r.metric_name === 'step_reached_pct') {
-      funnel.steps.push({ key: r.dimension_value, label: r.dimension_value.replace(/^\d+\s*-\s*/, ''), value: r.value_base,
-        detail: r.step_order ? `Passo ${r.step_order}` : undefined })
-    }
+    if (r.metric_name === 'step_reached_pct') funnel.raw.push(r)
     byLens.set(r.lens_name, funnel)
   }
-  return [...byLens.values()].sort((a, b) => (b.conversion ?? -1) - (a.conversion ?? -1))
+  return [...byLens.values()].map(({ raw, ...funnel }) => {
+    funnel.ordered = raw.length > 0 && raw.every(r => r.step_order !== null)
+    let reached = 100
+    funnel.steps = [...raw]
+      .sort((a, b) => (a.step_order ?? 0) - (b.step_order ?? 0))
+      .map((r, index) => {
+        const stepRate = r.value_base ?? 0
+        if (index > 0) reached = reached * stepRate / 100
+        const label = r.dimension_value.replace(/^\d+\s*-\s*/, '')
+        return funnel.ordered
+          ? { key: r.dimension_value, label, value: reached,
+              detail: index === 0 ? 'Passo 1 · início do funil' : `Passo ${r.step_order} · ${formatValue(stepRate, 'pct')} do passo anterior` }
+          : { key: r.dimension_value, label, value: r.value_base, detail: 'Ordem desconhecida: conversão do passo anterior' }
+      })
+    return funnel
+  }).sort((a, b) => (b.conversion ?? -1) - (a.conversion ?? -1))
 })
 
 function smartEvents(prefix: string): RankingRow[] {
@@ -142,7 +157,7 @@ const technical = computed(() => rows.value
           <VizChartCard
             v-for="funnel in funnels" :key="funnel.lens"
             :title="funnel.label"
-            :description="`Conversão ${formatValue(funnel.conversion, 'pct')}${funnel.median !== null ? ` · mediana até converter ${formatValue(funnel.median, 'seconds')}` : ''}`"
+            :description="`Conversão ${formatValue(funnel.conversion, 'pct')}${funnel.median !== null ? ` · mediana até converter ${formatValue(funnel.median, 'seconds')}` : ''}. ${funnel.ordered ? 'Barras: parte das sessões do primeiro passo que chegou a cada passo.' : 'Passos sem número: a ordem não é conhecida.'}`"
             :empty="!funnel.steps.length" empty-text="Sem passos nesta leitura."
           >
             <VizBarRanking :rows="funnel.steps" format="pct" :max="100" />
