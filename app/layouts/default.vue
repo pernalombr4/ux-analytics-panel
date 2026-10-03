@@ -1,63 +1,93 @@
 <script setup lang="ts">
-import type { NavigationMenuItem } from '@nuxt/ui'
-
-const route = useRoute()
+// The shell of the Nuxt UI dashboard template: sidebar with the app menu on
+// top, page groups, the access menu at the bottom, and a search (Cmd+K) that
+// also runs the period and appearance commands.
+const { links, open, go } = useNavigation()
+const period = usePeriod()
+const colorMode = useColorMode()
 const { set: setChave } = usePainelChave()
-const sair = () => setChave(null)
+usePageShortcuts()
 
-// Keep the period when moving between pages.
-const withPeriod = (path: string) => ({ path, query: { from: route.query.from, to: route.query.to, compare: route.query.compare } })
-
-const links = computed<NavigationMenuItem[]>(() => [
-  { label: 'Panorama', icon: 'i-lucide-layout-dashboard', to: withPeriod('/') },
-  { label: 'Atrito por tela', icon: 'i-lucide-mouse-pointer-click', to: withPeriod('/telas') },
-  { label: 'Desktop × Mobile', icon: 'i-lucide-smartphone', to: withPeriod('/dispositivos') },
-  { label: 'Audiência', icon: 'i-lucide-users', to: withPeriod('/audiencia') },
-  { label: 'Segmentos e funis', icon: 'i-lucide-filter', to: '/profundas' },
-  { label: 'Qualidade do produto', icon: 'i-lucide-shield-check', to: withPeriod('/qualidade') },
-  { label: 'Chamados', icon: 'i-lucide-headset', to: withPeriod('/chamados') },
-  { label: 'Saúde dos dados', icon: 'i-lucide-heart-pulse', to: '/saude' }
-])
+const groups = computed(() => [{
+  id: 'paginas',
+  label: 'Ir para',
+  items: Object.values(PAGES).map(page => ({
+    label: page.label,
+    icon: page.icon,
+    kbds: ['g', page.key],
+    onSelect: () => go(page)
+  }))
+}, {
+  id: 'periodo',
+  label: 'Período',
+  items: [
+    ...PRESETS.map(preset => ({
+      label: preset.label,
+      icon: 'i-lucide-calendar',
+      suffix: period.preset.value === preset.key ? 'atual' : undefined,
+      onSelect: () => period.setPreset(preset.key)
+    })),
+    {
+      label: period.compare.value ? 'Parar de comparar com o período anterior' : 'Comparar com o período anterior',
+      icon: 'i-lucide-git-compare',
+      onSelect: () => period.setCompare(!period.compare.value)
+    }
+  ]
+}, {
+  id: 'aparencia',
+  label: 'Aparência',
+  items: [
+    { label: 'Claro', icon: 'i-lucide-sun', onSelect: () => { colorMode.preference = 'light' } },
+    { label: 'Escuro', icon: 'i-lucide-moon', onSelect: () => { colorMode.preference = 'dark' } },
+    { label: 'Do sistema', icon: 'i-lucide-monitor', onSelect: () => { colorMode.preference = 'system' } }
+  ]
+}, {
+  id: 'acesso',
+  label: 'Acesso',
+  items: [{ label: 'Sair e esquecer a senha neste navegador', icon: 'i-lucide-log-out', onSelect: () => setChave(null) }]
+}])
 </script>
 
 <template>
-  <UDashboardGroup>
+  <UDashboardGroup unit="rem">
     <UDashboardSidebar
-      id="main"
+      id="default"
+      v-model:open="open"
       collapsible
       resizable
       class="bg-elevated/25"
       :ui="{ footer: 'lg:border-t lg:border-default' }"
     >
       <template #header="{ collapsed }">
-        <div class="flex items-center gap-2 px-1 min-w-0">
-          <UIcon name="i-lucide-activity" class="size-5 shrink-0 text-primary" />
-          <span v-if="!collapsed" class="font-semibold truncate">UX Analytics</span>
-        </div>
+        <AppMenu :collapsed="collapsed" />
       </template>
 
       <template #default="{ collapsed }">
-        <UNavigationMenu :collapsed="collapsed" :items="links" orientation="vertical" tooltip />
+        <UDashboardSearchButton :collapsed="collapsed" label="Buscar..." class="bg-transparent ring-default" />
+
+        <UNavigationMenu
+          :collapsed="collapsed"
+          :items="links[0]"
+          orientation="vertical"
+          tooltip
+          popover
+        />
+
+        <UNavigationMenu
+          :collapsed="collapsed"
+          :items="links[1]"
+          orientation="vertical"
+          tooltip
+          class="mt-auto"
+        />
       </template>
 
       <template #footer="{ collapsed }">
-        <div class="flex items-center justify-between w-full gap-2">
-          <span v-if="!collapsed" class="text-xs text-muted">Dados: Clarity e ENSPACE</span>
-          <div class="flex items-center gap-1">
-            <UColorModeButton />
-            <UTooltip text="Sair e esquecer a senha neste navegador">
-              <UButton
-                color="neutral"
-                variant="ghost"
-                icon="i-lucide-log-out"
-                aria-label="Sair"
-                @click="sair"
-              />
-            </UTooltip>
-          </div>
-        </div>
+        <AccessMenu :collapsed="collapsed" />
       </template>
     </UDashboardSidebar>
+
+    <UDashboardSearch :groups="groups" placeholder="Buscar página ou comando..." :color-mode="false" />
 
     <slot />
   </UDashboardGroup>

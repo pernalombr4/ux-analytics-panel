@@ -148,7 +148,7 @@ const groupColumns: TableColumn<BarRow>[] = [
           <UEmpty
             icon="i-lucide-database-zap"
             title="Chamados ainda não foram carregados"
-            description="A estrutura está pronta para a categoria Chamados do workspace produtos do ENSPACE. Os números aparecem aqui quando a carga for ligada."
+            description="A estrutura está pronta para a categoria Chamados do workspace produtos do ENSPACE. Os números aparecem aqui quando houver itens no workspace."
             variant="naked"
           />
         </UCard>

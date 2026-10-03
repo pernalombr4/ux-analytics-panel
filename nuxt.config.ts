@@ -10,16 +10,17 @@ export default defineNuxtConfig({
   ssr: false,
   nitro: { preset: 'github_pages' },
 
-  // System sans everywhere (dataviz rule), so no web font is fetched at build.
-  ui: { fonts: false },
+  // Public Sans, as in the Nuxt UI dashboard template: @nuxt/fonts downloads
+  // it at build time and the site serves it, no request to Google at runtime.
 
   // No server to answer icon requests: the icons in use ship in the bundle,
-  // and anything missed falls back to the public Iconify API.
+  // and anything missed falls back to the public Iconify API. The scan also
+  // reads .ts files (the menu and the pages list live in composables), which
+  // the default leaves out.
   icon: {
     provider: 'iconify',
     clientBundle: {
-      scan: true,
-      icons: ['lucide:lock-open', 'lucide:log-out', 'lucide:eye', 'lucide:eye-off']
+      scan: { globInclude: ['app/**/*.{vue,ts}', 'shared/**/*.ts'] }
     }
   },
 

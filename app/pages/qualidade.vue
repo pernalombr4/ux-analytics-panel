@@ -189,10 +189,10 @@ const caveats = computed(() => {
 <template>
   <UDashboardPanel id="qualidade">
     <template #header>
-      <UDashboardNavbar title="Qualidade do produto">
+      <UDashboardNavbar title="Riscos por área">
         <template #leading><UDashboardSidebarCollapse /></template>
         <template #right>
-          <UBadge v-if="kpis?.loaded_at" color="neutral" variant="subtle" icon="i-lucide-database">
+          <UBadge v-if="kpis?.loaded_at" color="neutral" variant="subtle" icon="i-lucide-database" class="hidden sm:inline-flex">
             ENSPACE lido em {{ formatDateTime(kpis.loaded_at) }}
           </UBadge>
         </template>
@@ -217,7 +217,7 @@ const caveats = computed(() => {
           <UEmpty
             icon="i-lucide-database-zap"
             title="Chamados e demandas ainda não foram carregados"
-            description="A estrutura está pronta: chamados, demandas, clientes, releases e CSAT do workspace produtos do ENSPACE, por área do sistema. Os números aparecem aqui quando a carga for ligada. O uso por área, abaixo, já vem do Clarity."
+            description="A estrutura está pronta: chamados, demandas, clientes, releases e CSAT do workspace produtos do ENSPACE, por área do sistema. Os números aparecem aqui quando houver itens no workspace. O uso por área, abaixo, já vem do Clarity."
             variant="naked"
           />
         </UCard>

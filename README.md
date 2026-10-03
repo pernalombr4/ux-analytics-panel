@@ -17,7 +17,7 @@ Peça a senha a quem administra o painel.
 | Desktop × Mobile | Qual a pior versão de cada tela |
 | Audiência | Dispositivos, países, navegadores, sistemas e origens de acesso |
 | Segmentos e funis | Leituras feitas na tela do Clarity (segmentos, funis, eventos) |
-| Qualidade do produto | Onde estão os defeitos e os chamados, por área do sistema, e quanto cada área é usada |
+| Riscos por área | Onde estão os defeitos e os chamados, por área do sistema, e quanto cada área é usada |
 | Chamados | Quem abre chamados, de que tipo, por qual origem e com que desfecho |
 | Saúde dos dados | Dias que faltam, coletas fora de hora e o que revisar |
 
@@ -27,6 +27,13 @@ Nenhum gráfico tem eixo de dias: cada um agrega o período escolhido, e a
 comparação com o período anterior é uma segunda barra. Os gráficos usam
 Unovis, a biblioteca do template de dashboard do Nuxt UI, e todo gráfico tem
 a opção de ver a tabela.
+
+A estrutura segue o [template de dashboard do Nuxt UI](https://github.com/nuxt-ui-templates/dashboard):
+menu lateral recolhível, busca com `Ctrl K` (páginas, período, aparência),
+atalhos `g` + letra para trocar de página (`g p` Panorama, `g q` Riscos por
+área, `g c` Chamados...), seletor de período com calendário e menu de tema e
+aparência. A única peça do template que fica de fora é o gráfico de linha por
+dia, pela regra acima.
 
 ## Como funciona
 
