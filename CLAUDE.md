@@ -1,7 +1,11 @@
 # Painel de UX Analytics do ENSPACE
 
+**A spec do agente `ux-analytics` fica no repositório privado `ux-analytics`, em `AGENTE_UX_ANALYTICS.md`. Leia
+inteira antes de qualquer ação; em conflito, ela vence.**
+
 Painel estático (Nuxt 4 + Nuxt UI 4 + SDK do ENSPACE) publicado no GitHub Pages a cada push na `main`.
-Os dados, o SQL e os robôs ficam no repositório irmão `ux-analytics` (privado). Esta sessão escreve só aqui.
+Os dados, o SQL e os robôs ficam no repositório irmão `ux-analytics` (privado). Este repositório é público: nada de
+dado, nome de cliente ou chave entra nele. O essencial, para a sessão que só tiver o painel aberto, vem a seguir.
 
 ## Interface: primeiro o SDK do ENSPACE, depois o Nuxt UI
 
