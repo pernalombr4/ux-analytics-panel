@@ -76,7 +76,7 @@ export function useQualitySummary(data: Ref<QualityResponse | null | undefined>)
     { key: 'notes', label: 'Detalhe', text: row => (row.notes ?? []).join(' · ') }
   ])
 
-  const riskDescription = 'Defeitos (demandas do tipo Bug) criados no período, pela prioridade. Ordem pelo score: Crítica vale 5, Urgente 4, Alta 3, Média 2, Baixa 1.'
+  const riskDescription = 'Defeitos (demandas do tipo Bug) criados no período, pela prioridade e pela Área do sistema da demanda. Sem ela, vale a área dos chamados de origem. Ordem pelo score: Crítica vale 5, Urgente 4, Alta 3, Média 2, Baixa 1.'
 
   /* ---------- uso por área (Clarity) ---------- */
 

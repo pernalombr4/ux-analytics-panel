@@ -59,7 +59,7 @@ const caveats = computed(() => {
   if (k.requests && k.requests_validated < k.requests) {
     out.push(`${formatValue(k.requests - k.requests_validated, 'int')} chamados ainda sem triagem: usam o tipo e a prioridade que o solicitante indicou.`)
   }
-  if (k.area_inherited) out.push(`${formatValue(k.area_inherited, 'int')} demandas sem campo de área herdaram a área dos chamados de origem.`)
+  if (k.area_inherited) out.push(`${formatValue(k.area_inherited, 'int')} demandas sem a Área do sistema preenchida usam a área dos chamados de origem.`)
   if (k.defects_no_area) out.push(`${formatValue(k.defects_no_area, 'int')} defeitos sem área nem chamado de origem estão em "Sem área".`)
   if (k.demands_no_status) out.push(`${formatValue(k.demands_no_status, 'int')} demandas sem status: não dá para dizer se estão abertas.`)
   if (k.inferred) out.push(`${formatValue(k.inferred, 'int')} itens vêm de fonte com valores inferidos, não lidos de campo.`)
